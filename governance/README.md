@@ -109,6 +109,15 @@ python -m unittest discover -s governance/tests
   - Längre körtid i vissa fall, till exempel 30 → 82 minuter per uppgift på SWE-EVO med Codex CLI (tab. 6).
   - Antalet ogiltigförklaringar mäter vad ogiltigförklaringsregeln utlöser, inte verifierade fel (bil. A.3).
 
-**Motposition: Ye m.fl., *Meta Context Engineering via Agentic Skill Evolution* (ICML 2026, PMLR 306).** Endast sammanfattningen är läst. I deras ramverk ändrar en meta-agent skills på egen hand, utifrån historiken av skills, körningar och utvärderingar. Det gav 5,6–53,8 % relativ förbättring (snitt 16,9 %) i fem domäner. Metoden förutsätter en automatisk utvärderingssignal från träningskörningar. Juridiska bedömningar inom SFV saknar en sådan signal, och där är mänsklig granskning den enda tillförlitliga. Därför står spärren kvar: meta-agenten föreslår men skriver inte in. Förslag kan rangordnas efter historiken, men en människa avgör.
+**Motposition: Ye m.fl., *Meta Context Engineering via Agentic Skill Evolution* (ICML 2026, PMLR 306).** Hela artikeln är läst.
+- **Metod:** en meta-agent ändrar skills på egen hand. Den utgår från historiken av skills, körningar och utvärderingar, och optimerar mot poäng på ett valideringsset (ekv. 3). Resultatet blev 5,6–53,8 % relativ förbättring mot de bästa befintliga metoderna, i snitt 16,9 %.
+- **Alla fem domäner har ett facit:** FiNER (finans), USPTO-50k (kemi), Symptom2Disease (medicin), LawBench (juridik) och AEGIS2 (AI-säkerhet).
+  - Juridiken gäller bara deluppgiften att förutsäga brottsrubricering i kinesisk straffrätt, mätt i micro-F1. Det är en klassificering, inte en bedömning (bil. A).
+- **Begränsningar enligt författarna:**
+  - Fördelen gäller kunskapsinhämtning och mönstermatchning, och kanske inte resonemangstunga uppgifter.
+  - Metoden kan ha svårt med långa, komplexa förlopp (§5).
+  - Effekten av att skills utvecklas, utöver en fast skill, är liten. Den mättes bara på FiNER: 75 mot 71 % offline (tab. 3).
+  - Bara delmängder av data användes, och studien bygger på en huvudmodell (DeepSeek V3.1).
+- **Följd för SFV:** juridiska bedömningar, som preskription, ÄTA eller avtalstolkning, är resonemangstunga och saknar facit som kan räknas fram. Därför står spärren kvar: meta-agenten föreslår men skriver inte in. Förslagen kan rangordnas efter historiken, men en människa avgör. Autonom utveckling kan prövas där facit finns, till exempel i scan2bim-mätningar.
 
 **Övriga källor är inte verifierade:** arXiv:2607.18235 och 2608.03392 samt LeadDev 2026-10-05. Idégrafen och flera parallella körningar är medvetet inte byggda.
