@@ -76,6 +76,92 @@ class CuratorTest(unittest.TestCase):
             self.assertEqual((d / "SKILL.md").read_text(encoding="utf-8"), PROSE)
 
 
+class CuratorProposalTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self.tmp.name) / "skills"
+        self.out = Path(self.tmp.name) / "prop"
+        d = self.root / "ata"
+        d.mkdir(parents=True)
+        self.skill = d / "SKILL.md"
+        self.skill.write_text(RULE_OK, encoding="utf-8")
+        (self.root / "tom").mkdir()
+        (self.root / "tom" / "SKILL.md").write_text(PROSE, encoding="utf-8")
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def _props(self):
+        return {f.name: f.read_text(encoding="utf-8") for f in self.out.glob("*.md")}
+
+    def test_retire_is_own_operation_and_restorable(self):
+        before = self.skill.read_bytes()
+        self.assertEqual(sc.main(["retire", str(self.skill), "--regel-id", "R1",
+                                  "--korning", "run-42", "--out", str(self.out)]), 0)
+        (body,) = self._props().values()
+        self.assertIn("typ: avveckling", body)
+        self.assertIn("run-42", body)
+        self.assertIn("- sökväg: `data.txt`", body)          # regeltexten ordagrant
+        self.assertIn("Vid avslag ändras ingenting", body)
+        self.assertEqual(self.skill.read_bytes(), before)
+        self.assertEqual(sc.main(["retire", str(self.skill), "--regel-id", "X9",
+                                  "--korning", "r", "--out", str(self.out)]), 2)
+
+    def test_no_proposal_inside_skill_dir(self):
+        with self.assertRaises(SystemExit):
+            sc.main(["retire", str(self.skill), "--regel-id", "R1", "--korning", "r",
+                     "--out", str(self.skill.parent / "prop")])
+
+    def test_cap_turns_add_into_replace(self):
+        tel = Path(self.tmp.name) / "tel.jsonl"
+        evs = [{"skill": s, "kommando": "python k21.py", "utfall": "human_accepted"}
+               for s in ("ata", "tom") for _ in range(3)]
+        tel.write_text("\n".join(json.dumps(e) for e in evs))
+        sc.main(["propose", str(tel), "--root", str(self.root), "--out", str(self.out)])
+        props = self._props()
+        ata = next(v for k, v in props.items() if "ata" in k)
+        tom = next(v for k, v in props.items() if "tom" in k)
+        self.assertIn("typ: ersätt", ata)
+        self.assertIn("ersatter: R1", ata)
+        self.assertIn("TAK:", ata)
+        self.assertIn("- sökväg: `data.txt`", ata)           # ersatt text för återställning
+        self.assertIn("typ: lägg till", tom)
+        self.assertEqual(self.skill.read_text(encoding="utf-8"), RULE_OK)
+
+    def test_cap_unchecked_without_root(self):
+        tel = Path(self.tmp.name) / "tel.jsonl"
+        tel.write_text("\n".join(json.dumps({"skill": "ata", "sokvag": "x.md", "utfall": "human_corrected"})
+                                 for _ in range(3)))
+        sc.main(["propose", str(tel), "--out", str(self.out)])
+        (body,) = self._props().values()
+        self.assertIn("tak: okontrollerat", body)
+
+    def test_overhead_followed_vs_ineffective(self):
+        def row(rid, m, utan, med):
+            return {"skill": "ata", "regel_id": rid, "modell": m, "foljsamhet_utan": utan, "foljsamhet_med": med}
+        rows = [row("R1", "a", 0.8, 0.8), row("R1", "b", 0.6, 0.8),      # redan följd
+                row("R2", "a", 0.0, 0.0), row("R2", "b", 0.2, 0.2),      # verkningslös
+                row("R3", "a", 0.0, 0.6), row("R3", "b", 0.2, 0.8),      # effektiv
+                row("R4", "a", 0.0, 0.6), row("R4", "b", 0.2, 0.2)]      # hälften overhead
+        c = sc.classify_pairs(rows, 0.2, 0.5)
+        self.assertEqual(c[("ata", "R1")]["klass"], "redan_foljd")
+        self.assertEqual(c[("ata", "R2")]["klass"], "verkningslos")
+        self.assertNotIn(("ata", "R3"), c)
+        self.assertIn(("ata", "R4"), c)
+        m = Path(self.tmp.name) / "m.jsonl"
+        m.write_text("\n".join(json.dumps(r) for r in rows))
+        before = self.skill.read_bytes()
+        sc.main(["overhead", str(m), "--root", str(self.root), "--out", str(self.out)])
+        props = self._props()
+        r1 = next(v for k, v in props.items() if "R1" in k)
+        r2 = next(v for k, v in props.items() if "R2" in k)
+        self.assertIn("typ: stryk", r1)
+        self.assertIn("- sökväg: `data.txt`", r1)            # återställningstext
+        self.assertIn("typ: ersätt", r2)
+        self.assertFalse(any("R3" in k for k in props))
+        self.assertEqual(self.skill.read_bytes(), before)
+
+
 class EvidenceGuardTest(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()

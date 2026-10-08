@@ -42,6 +42,26 @@ python governance/skill_curator.py propose telemetri.jsonl --min 3
 - Ett kommando eller en sökväg som förekommer minst `--min` gånger blir ett förslag i `governance/proposals/` med `status: proposed`.
 - `SKILL.md` ändras aldrig. En regel räknas först när en människa har fört in den och fyllt i `granskad_av`.
 
+### Avveckling och tak: samma mänskliga grind som tillägg
+
+Inget av kommandona nedan skriver i en skill. Förslag kan inte heller sparas i en skill-katalog; curatorn vägrar då. En människa genomför beslutet i en separat ändring och fyller i `granskad_av`.
+
+```bash
+python governance/skill_curator.py retire   <SKILL.md> --regel-id R1 --korning <körning/ref> [--orsak "..."]
+python governance/skill_curator.py propose  telemetri.jsonl --root <skills> [--tak 1]
+python governance/skill_curator.py overhead matningar.jsonl --root <skills> [--min-vinst 0.2] [--foljd 0.5]
+```
+
+1. **Avveckling är en egen operation (`retire`).** Förslaget anger tre saker:
+   - vilken regel som avses (skill och regel-id)
+   - vilken körning som motiverar avvecklingen
+   - vad som återställs. Vid avslag ändras ingenting. Om strykningen redan har genomförts och ska ångras finns regelsektionen ordagrant i förslaget, med sha256 för både sektionen och SKILL.md.
+2. **Tak (`--tak`, standard 1 regel per skill).**
+   - Ett förslag till en skill som redan har nått taket blir `ersätt` med `ersatter: <id>` och den ersatta texten, aldrig `lägg till`.
+   - Utan `--root` kan taket inte kontrolleras. Förslaget märks då `tak: okontrollerat`.
+   - `overhead` läser mätningar per regel och modell: `{"skill", "regel_id", "modell", "foljsamhet_utan", "foljsamhet_med"}`. En regel flaggas när minst hälften av modellerna saknar vinst, det vill säga när följsamheten med regeln minus följsamheten utan är under `--min-vinst`.
+   - Om medelföljsamheten utan regeln är minst `--foljd` (0,5) räknas regeln som redan följd. Förslaget blir `stryk`, och borttagningen ska prövas kontrollerat först. Annars räknas regeln som verkningslös, och förslaget blir `ersätt`, det vill säga skriv om. Kriterierna följer arXiv:2610.04832 §6.1.2.
+
 ## 2. Styrningsblock efter leverans: ogiltigförklaring av bevis
 
 Ett bevis är ett påstående som ingår i en leverans och är bundet till ett eller flera beroenden:
@@ -89,7 +109,7 @@ python -m unittest discover -s governance/tests
 **Hur detta styr verktyget:**
 - **`TOKEN_ONLY`:** att bara nämna kommandot eller sökvägen räcker inte. Regeln ska vara formulerad.
 - **Strykningar är också en ändring.** Att ta bort en regel sänker följsamheten med ungefär tre fjärdedelar av vad det gav att lägga till den (§5.1.4). Därför går strykningar genom samma mänskliga granskning.
-- **En regel kan kosta utan att göra nytta.** Var femte kombination av regel och modell gav fler tokens utan mätbar vinst (§6.1.2).
+- **En regel kan kosta utan att göra nytta.** Ett regel–modell-par av fem gav fler tokens utan mätbar vinst i följsamhet: 20 %, KI 16,1–24,2 % (§6.1.2). Av de 55 regler som minst hälften av modellerna klassade som overhead var 27 redan följda utan regeln. De ska prövas för kontrollerad borttagning. 28 var verkningslösa och ska skrivas om. Det är grunden för `overhead`.
 
 **Begränsningar i artikeln som påverkar SFV-skills:**
 - Bara regler som kan kontrolleras mekaniskt med en strängjämförelse är testade. Förbud, villkorade regler och behörighetsspärrar är underrepresenterade, och bara 17 % av de möjliga reglerna kom med.
@@ -147,4 +167,8 @@ python -m unittest discover -s governance/tests
   - Ingen komplexitetsbudget, så att antalet regler inte bara växer.
   - Ingen prövning av förändringar i miljöer som inte användes när de togs fram.
 
-**Övriga källor är inte verifierade:** arXiv:2607.18235 och LeadDev 2026-10-05. Idégrafen och flera parallella körningar är medvetet inte byggda.
+**arXiv:2607.18235** [V, verifierat av Bengt Skoglund mot källan 2026-10-08. Claude har inte haft tillgång till texten]. Ingen agentramverk (harness) vinner överallt: 30 ramverk, 12 par av modell och problem, 3,1 miljoner körningar. Valet av ramverk är en hyperparameter, och tidig rörelse förutspår slutresultatet. Rekommendationen är att starta flera, avbryta de svaga och flytta budget. Det ligger till grund för att flera parallella körningar medvetet inte är byggda ännu.
+
+**LeadDev 2026-10-05, Meta** [V, verifierat av Bengt Skoglund mot källan 2026-10-08. Claude har inte haft tillgång till texten]. Verktygen hålls stabila och skills ändras. En ny uppgift blir en ny skill, inte ett nytt system.
+
+Idégrafen och flera parallella körningar är medvetet inte byggda.
