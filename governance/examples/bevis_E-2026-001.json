@@ -1,0 +1,12 @@
+{
+  "id": "E-2026-001",
+  "leverans": "ÄTA-bedömning nr 12, PM 2026-10-08",
+  "datum": "2026-10-08",
+  "pastaende": "Anspråket framställdes efter preskriptionstidens utgång.",
+  "beroenden": {
+    "avtal": {"ref": "Kontrakt (exempel)", "fil": "kontrakt_exempel.txt", "sha256": "619312fa3da9cdea1935e5def5ee6d24e9ab20ff9fe2f2fc48ef7890b89c3002"},
+    "lydelse": {"ref": "AB 04 kap 6 § 19", "version": "AB 04"},
+    "preskription": {"ref": "Slutbesiktning (exempel)", "datum": "2027-03-01"},
+    "k21_bas": {"ref": "K21 bas (exempel)", "period": "2025-03", "varde": "100.0"}
+  }
+}
