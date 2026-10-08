@@ -143,7 +143,8 @@ def retire_body(skill_md: Path, section: str, rule_id: str, korning: str, orsak:
         f"### Återställning\n"
         f"Vid avslag ändras ingenting; regeln står kvar. Om strykningen redan är genomförd och ska ångras "
         f"återinförs sektionen nedan ordagrant (sha256 `{_sha(section)}`, "
-        f"SKILL.md vid förslaget sha256 `{_sha(skill_md.read_text(encoding='utf-8'))}`).\n\n"
+        f"SKILL.md vid förslaget sha256 `{hashlib.sha256(skill_md.read_bytes()).hexdigest()}` "
+        f"(filens bytes, jämförbar med Get-FileHash/sha256sum)).\n\n"
         f"```markdown\n{section}```\n"
     )
 
@@ -214,6 +215,7 @@ def cmd_scan(args: argparse.Namespace) -> int:
                 print(f"    - {w}")
     print(f"\nTotalt {len(results)} skills: " + ", ".join(f"{k}={v}" for k, v in sorted(counts.items())))
     if args.json:
+        _guard_out(Path(args.json).parent)
         Path(args.json).write_text(json.dumps([asdict(r) for r in results], ensure_ascii=False, indent=2), encoding="utf-8")
     if args.strict and any(counts[k] for k in ("PROSE_ONLY", "TOKEN_ONLY", "UNREVIEWED")):
         return 1

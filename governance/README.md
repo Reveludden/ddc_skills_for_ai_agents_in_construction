@@ -55,7 +55,7 @@ python governance/skill_curator.py overhead matningar.jsonl --root <skills> [--m
 1. **Avveckling är en egen operation (`retire`).** Förslaget anger tre saker:
    - vilken regel som avses (skill och regel-id)
    - vilken körning som motiverar avvecklingen
-   - vad som återställs. Vid avslag ändras ingenting. Om strykningen redan har genomförts och ska ångras finns regelsektionen ordagrant i förslaget, med sha256 för både sektionen och SKILL.md.
+   - vad som återställs. Vid avslag ändras ingenting. Om strykningen redan har genomförts och ska ångras finns regelsektionen ordagrant i förslaget, med sha256 för både sektionen och SKILL.md. Filens sha256 räknas på filens bytes och går att jämföra med `Get-FileHash`, även när filen har CRLF-radslut.
 2. **Tak och broms.**
    - `--tak N` är en flagga och är av som standard. När den anges blir ett förslag till en skill som redan har N regler `ersätt`, med `ersatter: <id>` och den ersatta texten, aldrig `lägg till`. Utan flaggan märks förslaget `tak: ej satt`.
    - Om ett standardvärde ska finnas är förslaget 3, inte 1. Beslutet är Bengts.

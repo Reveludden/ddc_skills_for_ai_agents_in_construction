@@ -107,6 +107,17 @@ class CuratorProposalTest(unittest.TestCase):
         self.assertEqual(sc.main(["retire", str(self.skill), "--regel-id", "X9",
                                   "--korning", "r", "--out", str(self.out)]), 2)
 
+    def test_retire_hash_matches_file_bytes_crlf(self):
+        import hashlib
+        self.skill.write_bytes(RULE_OK.replace("\n", "\r\n").encode("utf-8"))
+        sc.main(["retire", str(self.skill), "--regel-id", "R1", "--korning", "r", "--out", str(self.out)])
+        (body,) = self._props().values()
+        self.assertIn(hashlib.sha256(self.skill.read_bytes()).hexdigest(), body)
+
+    def test_scan_json_not_in_skill_dir(self):
+        with self.assertRaises(SystemExit):
+            sc.main(["scan", str(self.root), "--json", str(self.skill.parent / "rapport.json")])
+
     def test_no_proposal_inside_skill_dir(self):
         with self.assertRaises(SystemExit):
             sc.main(["retire", str(self.skill), "--regel-id", "R1", "--korning", "r",
