@@ -120,4 +120,17 @@ python -m unittest discover -s governance/tests
   - Bara delmängder av data användes, och studien bygger på en huvudmodell (DeepSeek V3.1).
 - **Följd för SFV:** juridiska bedömningar, som preskription, ÄTA eller avtalstolkning, är resonemangstunga och saknar facit som kan räknas fram. Därför står spärren kvar: meta-agenten föreslår men skriver inte in. Förslagen kan rangordnas efter historiken, men en människa avgör. Autonom utveckling kan prövas där facit finns, till exempel i scan2bim-mätningar.
 
+**Chen, Liang och Xie, *TagGraph: Tag-Augmented Graphs for Graph Retrieval of Agent Persistent Histories* (arXiv:2609.38353v2, workshoppapper vid COLM 2026).** Kontrollerat mot artikeltexten. Artikeln gäller idégrafen, som ännu inte är byggd.
+- **Ingen grafvariant vinner överallt.** På LongMemEval-S var den bästa grafvarianten 0,844 MRR, BM25 på samma anteckningar 0,867 och OpenClaw 0,880. På ATANT Core var lokal graftraversering bäst, ungefär 0,70, före BM25 (ungefär 0,64) och spridning med PageRank (ungefär 0,55). I stressrundorna ledde BM25 (tab. 1).
+- **Det mesta av styrkan är lexikal.** Att ta bort den direkta lexikala vägen till filerna (TF-IDF) kostade 0,119 MRR, medan själva spridningen bidrog med 0,020. På ATANT Core gav det +0,158 att ta bort spridningen (tab. 3).
+- **Taggarna avgör.** Valet av extraktionsmodell gav 0,290 MRR i skillnad. Det är mer än alla förbättringar av traverseringen tillsammans, som gav 0,132. 651 av 658 missade rätta anteckningar saknade en användbar tagg med minst en extraktionsmodell (§5.3, §5.5).
+- **Begränsningar:**
+  - Bara rangordning mäts, svarskvaliteten kontrolleras bara översiktligt.
+  - Små extraktionsmodeller användes.
+  - Orsaken till att spridningen gav sämre resultat är inte fastställd.
+- **Följd för SFV:** idégrafen väntar tills frågorna finns. När den byggs gäller tre villkor:
+  - Den ska jämföras mot BM25 på samma anteckningar och bara behållas om den slår BM25.
+  - Taggarna ska komma ur ett fast ordförråd som inte går att avvika från, till exempel AB 04-kapitel och paragraf, diarienummer och fastighetsbeteckning, och inte bara föreslås i en prompt.
+  - Lokal traversering, där vägen till svaret går att följa, ska väljas före spridning, eftersom spridning med PageRank är svårare att spåra (§6.3).
+
 **Övriga källor är inte verifierade:** arXiv:2607.18235 och 2608.03392 samt LeadDev 2026-10-05. Idégrafen och flera parallella körningar är medvetet inte byggda.
