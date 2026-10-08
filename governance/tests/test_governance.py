@@ -149,6 +149,30 @@ class EvidenceGuardTest(unittest.TestCase):
         self.assertEqual(eg.main(["check", "--ledger", str(self.ledger), "--state", str(sp),
                                   "--id", "E-1", "--today", "2026-10-08"]), 1)
 
+    def test_supersede_is_explicit(self):
+        new = dict(self.entry, id="E-2", ersatter=["E-1"])
+        p2 = self.dir / "e2.json"
+        p2.write_text(json.dumps(new, ensure_ascii=False))
+        self.assertEqual(eg.main(["record", "--ledger", str(self.ledger), "--entry", str(p2)]), 0)
+        sp = self.dir / "s.json"
+        sp.write_text(json.dumps(self.state, ensure_ascii=False))
+        rows = {r["id"]: st for r, st, *_ in eg.current_status(
+            eg.read_ledger(self.ledger), self.state, self.dir, date(2026, 10, 8), None)}
+        self.assertEqual(rows, {"E-1": "ERSATT", "E-2": "GILTIGT"})
+        base = ["check", "--ledger", str(self.ledger), "--state", str(sp), "--today", "2026-10-08"]
+        self.assertEqual(eg.main(base), 0)               # översikt: historik fäller inte
+        self.assertEqual(eg.main(base + ["--id", "E-1"]), 1)  # återanvändning av ersatt: nej
+        # Senare post utan ersatter ersätter inte (tidsordning räcker inte).
+        p3 = self.dir / "e3.json"
+        p3.write_text(json.dumps(dict(self.entry, id="E-3"), ensure_ascii=False))
+        eg.main(["record", "--ledger", str(self.ledger), "--entry", str(p3)])
+        self.assertEqual(eg.main(base + ["--id", "E-2"]), 0)
+
+    def test_supersede_unknown_id_rejected(self):
+        p2 = self.dir / "e2.json"
+        p2.write_text(json.dumps(dict(self.entry, id="E-2", ersatter=["E-99"]), ensure_ascii=False))
+        self.assertEqual(eg.main(["record", "--ledger", str(self.ledger), "--entry", str(p2)]), 2)
+
     def test_duplicate_id_rejected(self):
         p = self.dir / "e.json"
         self.assertEqual(eg.main(["record", "--ledger", str(self.ledger), "--entry", str(p)]), 2)

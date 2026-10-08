@@ -13,6 +13,9 @@ Varje beroende har `ref` plus de fält som ska jämföras, t.ex.
     {"ref": "AB 04 kap 6 § 19", "version": "AB 04"}
     {"ref": "Slutfaktura projekt X", "datum": "2027-03-01"}
     {"ref": "K21 bas projekt X", "period": "2025-03", "varde": "123.4"}
+En ny bevispost kan ange `ersatter: [id, ...]`. Ersättning gäller bara via
+denna uttryckliga relation, aldrig via tidsordning (jfr MemTrace, ekv. 2).
+Ett ersatt bevis är historik: status ERSATT, får inte återanvändas.
 Har beroendet `fil` räknas sha256 om från filen. Annars jämförs mot
 aktuellt tillstånd (state-fil). Saknas aktuellt värde: OKÄNT, fail-closed.
 
@@ -114,9 +117,13 @@ def evaluate(entry: dict, state: dict, base: Path, today: date) -> tuple[str, li
 
 def current_status(records: list[dict], state: dict, base: Path, today: date, ids: list[str] | None):
     invalidated = {r["bevis_id"]: r for r in records if r.get("typ") == "ogiltigforklaring"}
+    superseded = {old: r["id"] for r in records if r.get("typ") == "bevis" for old in r.get("ersatter", [])}
     out = []
     for r in records:
         if r.get("typ") != "bevis" or (ids and r["id"] not in ids):
+            continue
+        if r["id"] in superseded:
+            out.append((r, "ERSATT", [f"ersatt av {superseded[r['id']]} (historik, återanvänds inte)"], True))
             continue
         if r["id"] in invalidated:
             prev = invalidated[r["id"]]
@@ -149,8 +156,14 @@ def cmd_record(a) -> int:
     entry = json.loads(Path(a.entry).read_text(encoding="utf-8"))
     entry["typ"] = "bevis"
     errs = validate_entry(entry)
-    if any(r.get("id") == entry.get("id") for r in read_ledger(ledger) if r.get("typ") == "bevis"):
+    known = {r.get("id") for r in read_ledger(ledger) if r.get("typ") == "bevis"}
+    if entry.get("id") in known:
         errs.append(f"id {entry['id']} finns redan; loggen är append-only, använd nytt id")
+    ers = entry.get("ersatter", [])
+    if not isinstance(ers, list):
+        errs.append("ersatter måste vara en lista av bevis-id")
+    else:
+        errs += [f"ersatter: okänt bevis-id {x}" for x in ers if x not in known]
     if errs:
         print("\n".join(f"FEL: {e}" for e in errs), file=sys.stderr)
         return 2
@@ -168,7 +181,7 @@ def cmd_check(a) -> int:
         print(f"[{status}] {r['id']} ({r.get('leverans', '')})")
         for x in reasons:
             print(f"    - {x}")
-        if status != "GILTIGT":
+        if status in ("OGILTIGT", "OKÄNT") or (status == "ERSATT" and a.id):
             bad += 1
         if a.append and status == "OGILTIGT" and not sticky:
             append_ledger(ledger, {"typ": "ogiltigforklaring", "bevis_id": r["id"],

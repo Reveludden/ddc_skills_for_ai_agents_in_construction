@@ -63,6 +63,7 @@ python governance/evidence_guard.py block  --ledger bevis.jsonl --state aktuellt
 - **Bevisloggen är append-only.** En post ändras aldrig. Med `check --append` skrivs ogiltigförklaringen som en ny post.
 - **Ogiltigförklaringen är bestående.** Även om tillståndet återgår krävs ett nytt, omverifierat bevis med nytt id.
 - **Fail-closed.** Saknas aktuellt tillstånd eller fil blir status `OKÄNT`, och beviset får då inte återanvändas.
+- **Ersättning måste anges uttryckligen.** Ett nytt bevis kan ange `"ersatter": ["E-..."]`. Det gamla beviset får då status `ERSATT`, finns kvar som historik och återanvänds inte. Ett senare bevis utan `ersatter` ersätter ingenting.
 - **`block` skriver styrningsblocket** som läggs sist i leveransen, med status, beroenden och kontrollkommandot.
 
 Exempel finns i `examples/`. Tester:
@@ -95,6 +96,19 @@ python -m unittest discover -s governance/tests
 - Modellerna körde utan resonemangsläge. Uppgifterna gällde kodning.
 - Effekterna gäller förfrågningar där regeln faktiskt behövs. Det var ungefär 25 % av senare commits (§7.2).
 
+**Xu m.fl., *MemTrace: State-Consistent Memory for Long-Horizon Coding Agents*.** Kontrollerat mot artikeltexten. Att den har arXiv-nummer 2610.04838 bygger på användarens uppgift.
+- **Samma princip som här:**
+  - Spår ändras aldrig efter att de skrivits (§3.1).
+  - Ett spår återanvänds bara om det fortfarande stämmer med aktuellt tillstånd och inte är ersatt (ekv. 2).
+  - Om förutsättningarna har ändrats, eller inte går att kontrollera, återanvänds spåret inte automatiskt.
+- **Ersättning kräver en uttrycklig relation.** Tidsordning räcker inte. Det är därifrån fältet `ersatter` kommer.
+- **Lagring räcker inte.** Med bara lagrade spår, utan relationerna mellan dem, blev resultatet på DeepSWE 32,1 % mot 35,4 % utan något minne alls. Med relationerna blev det 44,2 %, och med hela systemet 56,6 % (tab. 3).
+- **Mycket bevis blir inaktuellt.** 57 % av spåren fick en senare ändring i någon fil de var kopplade till. Efter ungefär 1 000 händelsesteg var sannolikheten att filerna var oförändrade ungefär 0,50 (§4.3).
+- **Begränsningar:**
+  - En enda modell och bara kodningsuppgifter.
+  - Längre körtid i vissa fall, till exempel 30 → 82 minuter per uppgift på SWE-EVO med Codex CLI (tab. 6).
+  - Antalet ogiltigförklaringar mäter vad ogiltigförklaringsregeln utlöser, inte verifierade fel (bil. A.3).
+
 **Motposition: Ye m.fl., *Meta Context Engineering via Agentic Skill Evolution* (ICML 2026, PMLR 306).** Endast sammanfattningen är läst. I deras ramverk ändrar en meta-agent skills på egen hand, utifrån historiken av skills, körningar och utvärderingar. Det gav 5,6–53,8 % relativ förbättring (snitt 16,9 %) i fem domäner. Metoden förutsätter en automatisk utvärderingssignal från träningskörningar. Juridiska bedömningar inom SFV saknar en sådan signal, och där är mänsklig granskning den enda tillförlitliga. Därför står spärren kvar: meta-agenten föreslår men skriver inte in. Förslag kan rangordnas efter historiken, men en människa avgör.
 
-**Övriga källor är inte verifierade:** arXiv:2607.18235, 2610.04838 och 2608.03392 samt LeadDev 2026-10-05. Idégrafen och flera parallella körningar är medvetet inte byggda.
+**Övriga källor är inte verifierade:** arXiv:2607.18235 och 2608.03392 samt LeadDev 2026-10-05. Idégrafen och flera parallella körningar är medvetet inte byggda.
