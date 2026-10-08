@@ -133,4 +133,18 @@ python -m unittest discover -s governance/tests
   - Taggarna ska komma ur ett fast ordförråd som inte går att avvika från, till exempel AB 04-kapitel och paragraf, diarienummer och fastighetsbeteckning, och inte bara föreslås i en prompt.
   - Lokal traversering, där vägen till svaret går att följa, ska väljas före spridning, eftersom spridning med PageRank är svårare att spåra (§6.3).
 
-**Övriga källor är inte verifierade:** arXiv:2607.18235 och 2608.03392 samt LeadDev 2026-10-05. Idégrafen och flera parallella körningar är medvetet inte byggda.
+**Zhou m.fl., *Self-Evolving Coding Agents* (arXiv:2608.03392v2, översikt, preprint).** Kontrollerat mot artikeltexten.
+- **Det är en taxonomi, inte en rekommendation.** Översikten sorterar efter vad som utvecklas (ramverk, minne, skills/verktyg, modell, arbetsflöde, miljö), när det sker (under uppgiften, efter uppgiften, efter en större mängd erfarenhet) och vilken signal som driver förändringen (§3–4).
+- **Vad översikten stöder i vår regel:**
+  - Anpassningar som görs under en uppgift är lokala. De blir värdefulla först när de förs över till minne eller skills efter uppgiften (§4.1).
+  - Opålitlig återkoppling kan lagras som minne eller skill och då påverka framtida beteende (§7).
+- **Vad den inte stöder:**
+  - Den kräver inte mänsklig granskning. Signaler från mänsklig granskning finns i bara 3 av 65 artiklar (4,6 %), medan automatisk verifiering finns i 75,4 % (fig. 7).
+  - Den förbjuder inte utveckling under körning.
+  - Spärren hos oss är alltså ett SFV-beslut, eftersom juridiska bedömningar saknar facit som kan räknas fram. Den följer inte av översikten.
+- **Krav som översikten ställer och som här bara delvis är uppfyllda (§7):**
+  - Att ta bort en komponent ska vara en egen operation, med spårad härkomst och möjlighet att återställa. Bevisloggen har härkomst och ersättning, men curatorn saknar ett flöde för att pensionera skills.
+  - Ingen komplexitetsbudget, så att antalet regler inte bara växer.
+  - Ingen prövning av förändringar i miljöer som inte användes när de togs fram.
+
+**Övriga källor är inte verifierade:** arXiv:2607.18235 och LeadDev 2026-10-05. Idégrafen och flera parallella körningar är medvetet inte byggda.
