@@ -95,4 +95,6 @@ python -m unittest discover -s governance/tests
 - Modellerna körde utan resonemangsläge. Uppgifterna gällde kodning.
 - Effekterna gäller förfrågningar där regeln faktiskt behövs. Det var ungefär 25 % av senare commits (§7.2).
 
+**Motposition: Ye m.fl., *Meta Context Engineering via Agentic Skill Evolution* (ICML 2026, PMLR 306).** Endast sammanfattningen är läst. I deras ramverk ändrar en meta-agent skills på egen hand, utifrån historiken av skills, körningar och utvärderingar. Det gav 5,6–53,8 % relativ förbättring (snitt 16,9 %) i fem domäner. Metoden förutsätter en automatisk utvärderingssignal från träningskörningar. Juridiska bedömningar inom SFV saknar en sådan signal, och där är mänsklig granskning den enda tillförlitliga. Därför står spärren kvar: meta-agenten föreslår men skriver inte in. Förslag kan rangordnas efter historiken, men en människa avgör.
+
 **Övriga källor är inte verifierade:** arXiv:2607.18235, 2610.04838 och 2608.03392 samt LeadDev 2026-10-05. Idégrafen och flera parallella körningar är medvetet inte byggda.
