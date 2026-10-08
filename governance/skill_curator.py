@@ -48,7 +48,7 @@ WINDOWS_PATH_RE = re.compile(r"^([A-Za-z]:[\\/]|\\\\)")
 @dataclass
 class SkillResult:
     path: str
-    status: str  # OK | PROSE_ONLY | UNREVIEWED
+    status: str  # OK | PROSE_ONLY | TOKEN_ONLY | UNREVIEWED
     rule_id: str | None = None
     kommando: list[str] = field(default_factory=list)
     sokvag: list[str] = field(default_factory=list)
@@ -113,6 +113,12 @@ def curate_file(skill_md: Path) -> SkillResult:
     for c in res.kommando:
         if (w := _check_command(c, skill_md.parent)):
             res.warnings.append(w)
+    if not fields.get("regel"):
+        # Att formulera regeln ger mer än att bara nämna kommandot/sökvägen
+        # (arXiv:2610.04832 §5.1.2: +0.15 utöver enbart token).
+        res.status = "TOKEN_ONLY"
+        res.warnings.append("kommando/sökväg utan formulerad regel (regel:)")
+        return res
     if not fields.get("granskad_av"):
         res.status = "UNREVIEWED"
         res.warnings.append("regeln saknar granskad_av (mänsklig granskning)")
@@ -137,7 +143,7 @@ def cmd_scan(args: argparse.Namespace) -> int:
     print(f"\nTotalt {len(results)} skills: " + ", ".join(f"{k}={v}" for k, v in sorted(counts.items())))
     if args.json:
         Path(args.json).write_text(json.dumps([asdict(r) for r in results], ensure_ascii=False, indent=2), encoding="utf-8")
-    if args.strict and (counts["PROSE_ONLY"] or counts["UNREVIEWED"]):
+    if args.strict and any(counts[k] for k in ("PROSE_ONLY", "TOKEN_ONLY", "UNREVIEWED")):
         return 1
     return 0
 

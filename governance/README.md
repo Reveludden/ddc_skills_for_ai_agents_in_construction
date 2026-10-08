@@ -26,10 +26,11 @@ python governance/skill_curator.py scan <rot> [--json rapport.json] [--strict]
 | Status | Betydelse |
 |---|---|
 | `PROSE_ONLY` | Sektionen saknas, eller den saknar kommando och sökväg |
-| `UNREVIEWED` | Kommando eller sökväg finns, men ingen `granskad_av` |
-| `OK` | Kommando eller sökväg finns och en människa har granskat |
+| `TOKEN_ONLY` | Kommando eller sökväg finns, men ingen formulerad `regel:` |
+| `UNREVIEWED` | Regel med kommando eller sökväg finns, men ingen `granskad_av` |
+| `OK` | Formulerad regel med kommando eller sökväg, granskad av en människa |
 
-Varningar visas när en sökväg saknas eller ett programnamn inte finns i PATH. Curatorn kör aldrig kommandona. `--strict` ger exitkod 1 om någon skill har status `PROSE_ONLY` eller `UNREVIEWED`. Curatorn fungerar på vilken rot som helst, till exempel `N:\SKILLS`.
+Varningar visas när en sökväg saknas eller ett programnamn inte finns i PATH. Curatorn kör aldrig kommandona. `--strict` ger exitkod 1 om någon skill har annan status än `OK`. Curatorn fungerar på vilken rot som helst, till exempel `N:\SKILLS`.
 
 ### Meta-agenten föreslår men skriver inte in
 
@@ -72,4 +73,26 @@ python -m unittest discover -s governance/tests
 
 ## Underlag
 
-Upplägget bygger på användarens sammanfattning av arXiv:2610.04832, 2610.04838 och 2608.03392 samt en artikel i LeadDev 2026-10-05. Källorna är inte verifierade. arXiv gick inte att nå från körmiljön där detta byggdes. Idégrafen och flera parallella körningar (arXiv:2607.18235) är medvetet inte byggda.
+**Wang m.fl., *Agent Skill Evolution: How Revisions Affect Coding Agents* (okt 2026).** Siffrorna nedan är kontrollerade mot artikeltexten. Att texten hör till arXiv:2610.04832 bygger på användarens uppgift.
+
+| Påstående | Artikeln |
+|---|---|
+| Följsamhet +0,41 | 16 öppna modeller, ett svar (tabell 3). Fem slutna modeller: +0,43 |
+| Krävd handling +0,23 | Fyra agenter i sandlåda, spann +0,16 till +0,36 (tabell 4) |
+| Korrekt slutresultat +0,10 | Tre agenter, blindbedömt (tabell 5). Sonnet 4.5 ensam: +0,06, ej signifikant |
+| Vinsten sitter i kommando eller sökväg | Främst när kommandot eller sökvägen är **ny** för skillen (+0,51 till +0,66). Redan nämnd: +0,08. Att formulera regeln ger +0,15 utöver att bara nämna kommandot eller sökvägen (§5.1.2–5.1.3) |
+| Revideringar som bara ändrar prosa | +0,017 (§5) |
+| Hela skill-kroppen kostar +50 % | Genomsnitt per agentkörning, spann 37–57 % (§6.2.2). Själva revideringen ger ingen mätbar kostnad per körning |
+| Laddning vid behov behåller ungefär halva vinsten | 51 % i genomsnitt (KI 28–75 %). Öppna modeller ungefär 38 %. Sonnet 4.5: hela vinsten (+0,19 i båda lägena) (§5.2.4) |
+
+**Hur detta styr verktyget:**
+- **`TOKEN_ONLY`:** att bara nämna kommandot eller sökvägen räcker inte. Regeln ska vara formulerad.
+- **Strykningar är också en ändring.** Att ta bort en regel sänker följsamheten med ungefär tre fjärdedelar av vad det gav att lägga till den (§5.1.4). Därför går strykningar genom samma mänskliga granskning.
+- **En regel kan kosta utan att göra nytta.** Var femte kombination av regel och modell gav fler tokens utan mätbar vinst (§6.1.2).
+
+**Begränsningar i artikeln som påverkar SFV-skills:**
+- Bara regler som kan kontrolleras mekaniskt med en strängjämförelse är testade. Förbud, villkorade regler och behörighetsspärrar är underrepresenterade, och bara 17 % av de möjliga reglerna kom med.
+- Modellerna körde utan resonemangsläge. Uppgifterna gällde kodning.
+- Effekterna gäller förfrågningar där regeln faktiskt behövs. Det var ungefär 25 % av senare commits (§7.2).
+
+**Övriga källor är inte verifierade:** arXiv:2607.18235, 2610.04838 och 2608.03392 samt LeadDev 2026-10-05. Idégrafen och flera parallella körningar är medvetet inte byggda.

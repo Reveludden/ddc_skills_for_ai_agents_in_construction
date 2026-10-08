@@ -12,7 +12,8 @@ import skill_curator as sc  # noqa: E402
 
 PROSE = "---\nname: x\n---\n# X\n\nBara beskrivande text.\n"
 RULE_NO_CMD = "# X\n\n## Kontrollregel\n- regel: Var noggrann.\n- granskad_av: BS\n"
-RULE_UNREVIEWED = "# X\n\n## Kontrollregel\n- id: R1\n- kommando: `python3 -V`\n"
+RULE_TOKEN_ONLY = "# X\n\n## Kontrollregel\n- id: R1\n- kommando: `python3 -V`\n- granskad_av: BS\n"
+RULE_UNREVIEWED = "# X\n\n## Kontrollregel\n- id: R1\n- regel: Kör versionskontroll.\n- kommando: `python3 -V`\n"
 RULE_OK = (
     "# X\n\n## Kontrollregel\n- id: R1\n- regel: Fil måste finnas.\n- sökväg: `data.txt`\n"
     "- kommando: `python3 -V`\n- granskad_av: Bengt Skoglund\n- granskad: 2026-10-08\n\n## Nästa\n- kommando: `ignoreras`\n"
@@ -32,12 +33,14 @@ class CuratorTest(unittest.TestCase):
             self._skill(root, "prosa", PROSE)
             self._skill(root, "utan_kommando", RULE_NO_CMD)
             self._skill(root, "ogranskad", RULE_UNREVIEWED)
+            self._skill(root, "bara_token", RULE_TOKEN_ONLY)
             ok = self._skill(root, "ok", RULE_OK)
             (ok / "data.txt").write_text("x")
             res = {Path(r.path).parent.name: r for r in sc.scan(root)}
             self.assertEqual(res["prosa"].status, "PROSE_ONLY")
             self.assertEqual(res["utan_kommando"].status, "PROSE_ONLY")
             self.assertEqual(res["ogranskad"].status, "UNREVIEWED")
+            self.assertEqual(res["bara_token"].status, "TOKEN_ONLY")
             self.assertEqual(res["ok"].status, "OK")
             self.assertEqual(res["ok"].warnings, [])
             self.assertNotIn("ignoreras", res["ok"].kommando)
