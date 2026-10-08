@@ -9,7 +9,7 @@ skriver aldrig i SKILL.md.
 
 Användning:
     python governance/skill_curator.py scan <rot> [--json ut.json] [--strict]
-    python governance/skill_curator.py propose <telemetri.jsonl> [--root R] [--tak 1] [--min 3] [--out D]
+    python governance/skill_curator.py propose <telemetri.jsonl> [--root R] [--tak N] [--min 3] [--out D]
     python governance/skill_curator.py retire <SKILL.md> --regel-id ID --korning REF [--orsak TEXT] [--out D]
     python governance/skill_curator.py overhead <matningar.jsonl> [--root R] [--min-vinst 0.2] [--foljd 0.5] [--out D]
 
@@ -18,8 +18,9 @@ skriver i SKILL.md. Tillägg, ersättning och avveckling passerar samma
 mänskliga grind: en människa för in eller stryker regeln och fyller i
 `granskad_av`.
 
-Tak: en skill får högst `--tak` kontrollregler. Ett nytt förslag till en skill
-som redan är vid taket blir `ersätt`, inte `lägg till`. Regler som mätningar
+Tak: `--tak N` är en flagga och är av som standard. När den anges blir ett
+nytt förslag till en skill som redan har N regler `ersätt`, inte `lägg till`.
+Bromsen i normalfallet är `overhead`. Regler som mätningar
 visar redan följs eller ignoreras blir `stryk` respektive `ersätt`
 (arXiv:2610.04832 §6.1.2).
 """
@@ -249,7 +250,10 @@ def cmd_propose(args: argparse.Namespace) -> int:
         existing = rule_sections(skill_md.read_text(encoding="utf-8")) if skill_md else []
         header = {"skill": skill, "kalla": "meta-agent", "underlag": f"{n} granskade händelser"}
         restore = ""
-        if root is None or skill_md is None:
+        if args.tak is None:
+            header["typ"] = "lägg till"
+            header["tak"] = "ej satt (--tak är en flagga; overhead är bromsen)"
+        elif root is None or skill_md is None:
             header["typ"] = "lägg till"
             header["tak"] = "okontrollerat (skill ej hittad under --root)"
             print(f"VARNING: tak okontrollerat för {skill}")
@@ -353,7 +357,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("telemetry")
     p.add_argument("--min", type=int, default=3)
     p.add_argument("--root")
-    p.add_argument("--tak", type=int, default=1)
+    p.add_argument("--tak", type=int, default=None,
+                   help="högsta antal kontrollregler per skill; av som standard (förslag om standard: 3, beslut: Bengt)")
     p.add_argument("--out", default=str(Path(__file__).parent / "proposals"))
     p.set_defaults(func=cmd_propose)
     r = sub.add_parser("retire")

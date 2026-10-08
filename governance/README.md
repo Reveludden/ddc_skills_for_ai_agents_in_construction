@@ -48,7 +48,7 @@ Inget av kommandona nedan skriver i en skill. Förslag kan inte heller sparas i 
 
 ```bash
 python governance/skill_curator.py retire   <SKILL.md> --regel-id R1 --korning <körning/ref> [--orsak "..."]
-python governance/skill_curator.py propose  telemetri.jsonl --root <skills> [--tak 1]
+python governance/skill_curator.py propose  telemetri.jsonl --root <skills> [--tak N]
 python governance/skill_curator.py overhead matningar.jsonl --root <skills> [--min-vinst 0.2] [--foljd 0.5]
 ```
 
@@ -56,11 +56,13 @@ python governance/skill_curator.py overhead matningar.jsonl --root <skills> [--m
    - vilken regel som avses (skill och regel-id)
    - vilken körning som motiverar avvecklingen
    - vad som återställs. Vid avslag ändras ingenting. Om strykningen redan har genomförts och ska ångras finns regelsektionen ordagrant i förslaget, med sha256 för både sektionen och SKILL.md.
-2. **Tak (`--tak`, standard 1 regel per skill).**
-   - Ett förslag till en skill som redan har nått taket blir `ersätt` med `ersatter: <id>` och den ersatta texten, aldrig `lägg till`.
-   - Utan `--root` kan taket inte kontrolleras. Förslaget märks då `tak: okontrollerat`.
-   - `overhead` läser mätningar per regel och modell: `{"skill", "regel_id", "modell", "foljsamhet_utan", "foljsamhet_med"}`. En regel flaggas när minst hälften av modellerna saknar vinst, det vill säga när följsamheten med regeln minus följsamheten utan är under `--min-vinst`.
-   - Om medelföljsamheten utan regeln är minst `--foljd` (0,5) räknas regeln som redan följd. Förslaget blir `stryk`, och borttagningen ska prövas kontrollerat först. Annars räknas regeln som verkningslös, och förslaget blir `ersätt`, det vill säga skriv om. Kriterierna följer arXiv:2610.04832 §6.1.2.
+2. **Tak och broms.**
+   - `--tak N` är en flagga och är av som standard. När den anges blir ett förslag till en skill som redan har N regler `ersätt`, med `ersatter: <id>` och den ersatta texten, aldrig `lägg till`. Utan flaggan märks förslaget `tak: ej satt`.
+   - Om ett standardvärde ska finnas är förslaget 3, inte 1. Beslutet är Bengts.
+   - Med `--tak` men utan `--root` kan taket inte kontrolleras. Förslaget märks då `tak: okontrollerat`.
+   - Bromsen i normalfallet är `overhead`:
+     - `overhead` läser mätningar per regel och modell: `{"skill", "regel_id", "modell", "foljsamhet_utan", "foljsamhet_med"}`. En regel flaggas när minst hälften av modellerna saknar vinst, det vill säga när följsamheten med regeln minus följsamheten utan är under `--min-vinst`.
+     - Om medelföljsamheten utan regeln är minst `--foljd` (0,5) räknas regeln som redan följd. Förslaget blir `stryk`, och borttagningen ska prövas kontrollerat först. Annars räknas regeln som verkningslös, och förslaget blir `ersätt`, det vill säga skriv om. Kriterierna följer arXiv:2610.04832 §6.1.2.
 
 ## 2. Styrningsblock efter leverans: ogiltigförklaring av bevis
 
@@ -144,7 +146,7 @@ python -m unittest discover -s governance/tests
 - **Ingen grafvariant vinner överallt (tab. 1).**
   - LongMemEval-S: bästa grafvariant 0,844 MRR, BM25 på samma extrakt 0,867, OpenClaw på råtext 0,880.
   - ATANT Core: lokal traversering 0,677–0,734, före OpenClaw (0,705), BM25 (0,631–0,641) och spridning med PageRank (0,544–0,554).
-  - Stressrundor R2–R5: bästa grafvariant per extraktionsmodell 0,823–0,827, BM25 0,866–0,872, OpenClaw 0,847.
+  - Stressrundor R2–R5: bästa lokala grafvariant 0,823–0,827 (GPT-OSS 0,827, Qwen 0,823, Gemma 0,824). AdaptiveGraph 0,809–0,826. BM25 0,866–0,872. OpenClaw 0,847. Värdet 0,872 för grafen i tabell 8 gäller bara rond 5 och ingår inte i snittet.
 - **Det mesta av styrkan är lexikal.** Ablationen gäller extraktion med GPT-OSS (tab. 3). På LongMemEval-S kostade det 0,119 MRR att ta bort den direkta lexikala vägen till filerna (TF-IDF). Spridningen bidrog med 0,020. På ATANT Core blev resultatet 0,158 bättre när spridningen togs bort.
 - **Taggarna avgör.** Valet av extraktionsmodell gav 0,290 MRR i skillnad. Det är mer än alla förbättringar av traverseringen tillsammans, som gav 0,132. 651 av 658 missade rätta anteckningar saknade en användbar tagg med minst en extraktionsmodell (§5.3, §5.5).
 - **Begränsningar:**

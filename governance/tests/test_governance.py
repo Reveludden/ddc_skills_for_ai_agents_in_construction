@@ -117,7 +117,7 @@ class CuratorProposalTest(unittest.TestCase):
         evs = [{"skill": s, "kommando": "python k21.py", "utfall": "human_accepted"}
                for s in ("ata", "tom") for _ in range(3)]
         tel.write_text("\n".join(json.dumps(e) for e in evs))
-        sc.main(["propose", str(tel), "--root", str(self.root), "--out", str(self.out)])
+        sc.main(["propose", str(tel), "--root", str(self.root), "--tak", "1", "--out", str(self.out)])
         props = self._props()
         ata = next(v for k, v in props.items() if "ata" in k)
         tom = next(v for k, v in props.items() if "tom" in k)
@@ -132,9 +132,18 @@ class CuratorProposalTest(unittest.TestCase):
         tel = Path(self.tmp.name) / "tel.jsonl"
         tel.write_text("\n".join(json.dumps({"skill": "ata", "sokvag": "x.md", "utfall": "human_corrected"})
                                  for _ in range(3)))
-        sc.main(["propose", str(tel), "--out", str(self.out)])
+        sc.main(["propose", str(tel), "--tak", "3", "--out", str(self.out)])
         (body,) = self._props().values()
         self.assertIn("tak: okontrollerat", body)
+
+    def test_cap_off_by_default(self):
+        tel = Path(self.tmp.name) / "tel.jsonl"
+        tel.write_text("\n".join(json.dumps({"skill": "ata", "kommando": "python k21.py", "utfall": "human_accepted"})
+                                 for _ in range(3)))
+        sc.main(["propose", str(tel), "--root", str(self.root), "--out", str(self.out)])
+        (body,) = self._props().values()
+        self.assertIn("typ: lägg till", body)
+        self.assertIn("tak: ej satt", body)
 
     def test_overhead_followed_vs_ineffective(self):
         def row(rid, m, utan, med):
