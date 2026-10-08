@@ -1,0 +1,180 @@
+# Styrning av skills och bevis
+
+Två tillägg. Befintliga skills och verktyg ändras inte. Allt är Python-standardbibliotek.
+
+## 1. Kontrollregel per skill och skill-curator
+
+Varje `SKILL.md` ska ha en sektion som pekar på något som går att kontrollera, alltså ett kommando eller en sökväg. Prosa räcker inte.
+
+```markdown
+## Kontrollregel
+- id: SFV-ATA-01
+- regel: Preskription kontrolleras innan anspråket bedöms i sak.
+- kommando: `python governance/evidence_guard.py check --ledger bevis.jsonl --state aktuellt.json`
+- sökväg: `mallar/ata_svar.docx`
+- granskad_av: Bengt Skoglund
+- granskad: 2026-10-08
+- källa: människa
+```
+
+Bara text inom backticks räknas som kommando eller sökväg. Engelska nycklar (`command`, `path`, `reviewed_by`) godtas också.
+
+```bash
+python governance/skill_curator.py scan <rot> [--json rapport.json] [--strict]
+```
+
+| Status | Betydelse |
+|---|---|
+| `PROSE_ONLY` | Sektionen saknas, eller den saknar kommando och sökväg |
+| `TOKEN_ONLY` | Kommando eller sökväg finns, men ingen formulerad `regel:` |
+| `UNREVIEWED` | Regel med kommando eller sökväg finns, men ingen `granskad_av` |
+| `OK` | Formulerad regel med kommando eller sökväg, granskad av en människa |
+
+Varningar visas när en sökväg saknas eller ett programnamn inte finns i PATH. Curatorn kör aldrig kommandona. `--strict` ger exitkod 1 om någon skill har annan status än `OK`. Curatorn fungerar på vilken rot som helst, till exempel `N:\SKILLS`.
+
+### Meta-agenten föreslår men skriver inte in
+
+```bash
+python governance/skill_curator.py propose telemetri.jsonl --min 3
+```
+
+- Underlaget är bara händelser vars utfall en människa har granskat (`human_accepted`, `human_corrected`). Det som agenten gjort på egen hand ignoreras.
+- Ett kommando eller en sökväg som förekommer minst `--min` gånger blir ett förslag i `governance/proposals/` med `status: proposed`.
+- `SKILL.md` ändras aldrig. En regel räknas först när en människa har fört in den och fyllt i `granskad_av`.
+
+### Avveckling och tak: samma mänskliga grind som tillägg
+
+Inget av kommandona nedan skriver i en skill. Förslag kan inte heller sparas i en skill-katalog; curatorn vägrar då. En människa genomför beslutet i en separat ändring och fyller i `granskad_av`.
+
+```bash
+python governance/skill_curator.py retire   <SKILL.md> --regel-id R1 --korning <körning/ref> [--orsak "..."]
+python governance/skill_curator.py propose  telemetri.jsonl --root <skills> [--tak N]
+python governance/skill_curator.py overhead matningar.jsonl --root <skills> [--min-vinst 0.2] [--foljd 0.5]
+```
+
+1. **Avveckling är en egen operation (`retire`).** Förslaget anger tre saker:
+   - vilken regel som avses (skill och regel-id)
+   - vilken körning som motiverar avvecklingen
+   - vad som återställs. Vid avslag ändras ingenting. Om strykningen redan har genomförts och ska ångras finns regelsektionen ordagrant i förslaget, med sha256 för både sektionen och SKILL.md. Filens sha256 räknas på filens bytes och går att jämföra med `Get-FileHash`, även när filen har CRLF-radslut.
+2. **Tak och broms.**
+   - `--tak N` är en flagga och är av som standard. När den anges blir ett förslag till en skill som redan har N regler `ersätt`, med `ersatter: <id>` och den ersatta texten, aldrig `lägg till`. Utan flaggan märks förslaget `tak: ej satt`.
+   - Om ett standardvärde ska finnas är förslaget 3, inte 1. Beslutet är Bengts.
+   - Med `--tak` men utan `--root` kan taket inte kontrolleras. Förslaget märks då `tak: okontrollerat`.
+   - Bromsen i normalfallet är `overhead`:
+     - `overhead` läser mätningar per regel och modell: `{"skill", "regel_id", "modell", "foljsamhet_utan", "foljsamhet_med"}`. En regel flaggas när minst hälften av modellerna saknar vinst, det vill säga när följsamheten med regeln minus följsamheten utan är under `--min-vinst`.
+     - Om medelföljsamheten utan regeln är minst `--foljd` (0,5) räknas regeln som redan följd. Förslaget blir `stryk`, och borttagningen ska prövas kontrollerat först. Annars räknas regeln som verkningslös, och förslaget blir `ersätt`, det vill säga skriv om. Kriterierna följer arXiv:2610.04832 §6.1.2.
+
+## 2. Styrningsblock efter leverans: ogiltigförklaring av bevis
+
+Ett bevis är ett påstående som ingår i en leverans och är bundet till ett eller flera beroenden:
+
+| Beroende | Exempel på fält |
+|---|---|
+| `avtal` | `fil` och `sha256` (räknas om från filen) |
+| `lydelse` | `version` eller `sha256`, plus `mening` mot `text` i aktuellt tillstånd |
+| `preskription` | `datum` (passerat datum ger också ogiltigt) |
+| `k21_bas` | `period`, `varde` |
+
+```bash
+python governance/evidence_guard.py fingerprint avtal/kontrakt.pdf
+python governance/evidence_guard.py record --ledger bevis.jsonl --entry post.json
+python governance/evidence_guard.py check  --ledger bevis.jsonl --state aktuellt.json [--id E-..] [--append]
+python governance/evidence_guard.py block  --ledger bevis.jsonl --state aktuellt.json --id E-..
+```
+
+- **Bevisloggen är append-only.** En post ändras aldrig. Med `check --append` skrivs ogiltigförklaringen som en ny post.
+- **Ogiltigförklaringen är bestående.** Även om tillståndet återgår krävs ett nytt, omverifierat bevis med nytt id.
+- **Åberopad mening.** Saknas `mening` eller lydelsetexten blir status `OKÄNT`. Finns meningen inte i `text` blir status `OGILTIGT`. Existens av lagrum räcker inte.
+- **Fail-closed.** Saknas aktuellt tillstånd eller fil blir status `OKÄNT`, och beviset får då inte återanvändas.
+- **Ersättning måste anges uttryckligen.** Ett nytt bevis kan ange `"ersatter": ["E-..."]`. Det gamla beviset får då status `ERSATT`, finns kvar som historik och återanvänds inte. Ett senare bevis utan `ersatter` ersätter ingenting.
+- **`block` skriver styrningsblocket** som läggs sist i leveransen, med status, beroenden och kontrollkommandot.
+
+Exempel finns i `examples/`. Tester:
+
+```bash
+python -m unittest discover -s governance/tests
+```
+
+## Underlag
+
+**Wang m.fl., *Agent Skill Evolution: How Revisions Affect Coding Agents* (okt 2026).** Siffrorna nedan är kontrollerade mot artikeltexten. Att texten hör till arXiv:2610.04832 bygger på användarens uppgift.
+
+| Påstående | Artikeln |
+|---|---|
+| Följsamhet +0,41 | 16 öppna modeller, ett svar (tabell 3). Fem slutna modeller: +0,43 |
+| Krävd handling +0,23 | Fyra agenter i sandlåda, spann +0,16 till +0,36 (tabell 4) |
+| Korrekt slutresultat +0,10 | Tre agenter, blindbedömt (tabell 5). Sonnet 4.5 ensam: +0,06, ej signifikant |
+| Vinsten sitter i kommando eller sökväg | Främst när kommandot eller sökvägen är **ny** för skillen (+0,51 till +0,66). Redan nämnd: +0,08. Att formulera regeln ger +0,15 utöver att bara nämna kommandot eller sökvägen (§5.1.2–5.1.3) |
+| Revideringar som bara ändrar prosa | +0,017 (§5) |
+| Hela skill-kroppen kostar +50 % | Genomsnitt per agentkörning, spann 37–57 % (§6.2.2). Själva revideringen ger ingen mätbar kostnad per körning |
+| Laddning vid behov behåller ungefär halva vinsten | 51 % i genomsnitt (KI 28–75 %). Öppna modeller ungefär 38 %. Sonnet 4.5: hela vinsten (+0,19 i båda lägena) (§5.2.4) |
+
+**Hur detta styr verktyget:**
+- **`TOKEN_ONLY`:** att bara nämna kommandot eller sökvägen räcker inte. Regeln ska vara formulerad.
+- **Strykningar är också en ändring.** Att ta bort en regel sänker följsamheten med ungefär tre fjärdedelar av vad det gav att lägga till den (§5.1.4). Därför går strykningar genom samma mänskliga granskning.
+- **En regel kan kosta utan att göra nytta.** Ett regel–modell-par av fem gav fler tokens utan mätbar vinst i följsamhet: 20 %, KI 16,1–24,2 % (§6.1.2). Av de 55 regler som minst hälften av modellerna klassade som overhead var 27 redan följda utan regeln. De ska prövas för kontrollerad borttagning. 28 var verkningslösa och ska skrivas om. Det är grunden för `overhead`.
+
+**Begränsningar i artikeln som påverkar SFV-skills:**
+- Bara regler som kan kontrolleras mekaniskt med en strängjämförelse är testade. Förbud, villkorade regler och behörighetsspärrar är underrepresenterade, och bara 17 % av de möjliga reglerna kom med.
+- Modellerna körde utan resonemangsläge. Uppgifterna gällde kodning.
+- Effekterna gäller förfrågningar där regeln faktiskt behövs. Det var ungefär 25 % av senare commits (§7.2).
+
+**Xu m.fl., *MemTrace: State-Consistent Memory for Long-Horizon Coding Agents*.** Kontrollerat mot artikeltexten. Att den har arXiv-nummer 2610.04838 bygger på användarens uppgift.
+- **Samma princip som här:**
+  - Spår ändras aldrig efter att de skrivits (§3.1).
+  - Ett spår återanvänds bara om det fortfarande stämmer med aktuellt tillstånd och inte är ersatt (ekv. 2).
+  - Om förutsättningarna har ändrats, eller inte går att kontrollera, återanvänds spåret inte automatiskt.
+- **Ersättning kräver en uttrycklig relation.** Tidsordning räcker inte. Det är därifrån fältet `ersatter` kommer.
+- **Lagring räcker inte.** Med bara lagrade spår, utan relationerna mellan dem, blev resultatet på DeepSWE 32,1 % mot 35,4 % utan något minne alls. Med relationerna blev det 44,2 %, och med hela systemet 56,6 % (tab. 3).
+- **Mycket bevis blir inaktuellt.** 57 % av spåren fick en senare ändring i någon fil de var kopplade till. Efter ungefär 1 000 händelsesteg var sannolikheten att filerna var oförändrade ungefär 0,50 (§4.3).
+- **Begränsningar:**
+  - En enda modell och bara kodningsuppgifter.
+  - Längre körtid i vissa fall, till exempel 30 → 82 minuter per uppgift på SWE-EVO med Codex CLI (tab. 6).
+  - Antalet ogiltigförklaringar mäter vad ogiltigförklaringsregeln utlöser, inte verifierade fel (bil. A.3).
+
+**Motposition: Ye m.fl., *Meta Context Engineering via Agentic Skill Evolution* (ICML 2026, PMLR 306).** Hela artikeln är läst.
+- **Metod:** en meta-agent ändrar skills på egen hand. Den utgår från historiken av skills, körningar och utvärderingar, och optimerar mot poäng på ett valideringsset (ekv. 3). Resultatet blev 5,6–53,8 % relativ förbättring mot de bästa befintliga metoderna, i snitt 16,9 %.
+- **Alla fem domäner har ett facit:** FiNER (finans), USPTO-50k (kemi), Symptom2Disease (medicin), LawBench (juridik) och AEGIS2 (AI-säkerhet).
+  - Juridiken gäller bara deluppgiften att förutsäga brottsrubricering i kinesisk straffrätt, mätt i micro-F1. Det är en klassificering, inte en bedömning (bil. A).
+- **Begränsningar enligt författarna:**
+  - Fördelen gäller kunskapsinhämtning och mönstermatchning, och kanske inte resonemangstunga uppgifter.
+  - Metoden kan ha svårt med långa, komplexa förlopp (§5).
+  - Effekten av att skills utvecklas, utöver en fast skill, är liten. Den mättes bara på FiNER: 75 mot 71 % offline (tab. 3).
+  - Bara delmängder av data användes, och studien bygger på en huvudmodell (DeepSeek V3.1).
+- **Följd för SFV:** juridiska bedömningar, som preskription, ÄTA eller avtalstolkning, är resonemangstunga och saknar facit som kan räknas fram. Därför står spärren kvar: meta-agenten föreslår men skriver inte in. Förslagen kan rangordnas efter historiken, men en människa avgör. Autonom utveckling kan prövas där facit finns, till exempel i scan2bim-mätningar.
+
+**Chen, Liang och Xie, *TagGraph: Tag-Augmented Graphs for Graph Retrieval of Agent Persistent Histories* (arXiv:2609.38353v2, workshoppapper vid COLM 2026).** Kontrollerat mot artikeltexten. Artikeln gäller idégrafen, som ännu inte är byggd.
+- **Ingen grafvariant vinner överallt (tab. 1).**
+  - LongMemEval-S: bästa grafvariant 0,844 MRR, BM25 på samma extrakt 0,867, OpenClaw på råtext 0,880.
+  - ATANT Core: lokal traversering 0,677–0,734, före OpenClaw (0,705), BM25 (0,631–0,641) och spridning med PageRank (0,544–0,554).
+  - Stressrundor R2–R5: bästa lokala grafvariant 0,823–0,827 (GPT-OSS 0,827, Qwen 0,823, Gemma 0,824). AdaptiveGraph 0,809–0,826. BM25 0,866–0,872. OpenClaw 0,847. Värdet 0,872 för grafen i tabell 8 gäller bara rond 5 och ingår inte i snittet.
+- **Det mesta av styrkan är lexikal.** Ablationen gäller extraktion med GPT-OSS (tab. 3). På LongMemEval-S kostade det 0,119 MRR att ta bort den direkta lexikala vägen till filerna (TF-IDF). Spridningen bidrog med 0,020. På ATANT Core blev resultatet 0,158 bättre när spridningen togs bort.
+- **Taggarna avgör.** Valet av extraktionsmodell gav 0,290 MRR i skillnad. Det är mer än alla förbättringar av traverseringen tillsammans, som gav 0,132. 651 av 658 missade rätta anteckningar saknade en användbar tagg med minst en extraktionsmodell (§5.3, §5.5).
+- **Begränsningar:**
+  - Bara rangordning mäts, svarskvaliteten kontrolleras bara översiktligt.
+  - Små extraktionsmodeller användes.
+  - Orsaken till att spridningen gav sämre resultat är inte fastställd.
+- **Följd för SFV:** idégrafen väntar tills frågorna finns. Innan en graf skrivs ska tre grindar passeras:
+  1. **Sök i originaltexten först.** Grafen behålls bara om den slår den starkaste baslinjen på riktiga SFV-frågor: sökning i originaltexten och BM25 på extrakten. OpenClaw, som kombinerar embeddings och BM25 på råtext, var bäst på LongMemEval-S. På ATANT var det inte alltid bäst: lokal traversering ledde i Core och BM25 i stressrundorna. Därför prövas båda baslinjerna.
+  2. **Fast ordförråd i koden, inte i prompten.** En okänd tagg avvisas. Exempel: `ab04/kap6/§19`, diarienummer, fastighetsbeteckning och K21-period.
+  3. **Lokal traversering. Ingen PageRank.**
+
+**Zhou m.fl., *Self-Evolving Coding Agents* (arXiv:2608.03392v2, översikt, preprint).** Kontrollerat mot artikeltexten.
+- **Det är en taxonomi, inte en rekommendation.** Översikten sorterar efter vad som utvecklas (ramverk, minne, skills/verktyg, modell, arbetsflöde, miljö), när det sker (under uppgiften, efter uppgiften, efter en större mängd erfarenhet) och vilken signal som driver förändringen (§3–4).
+- **Vad översikten stöder i vår regel:**
+  - Anpassningar som görs under en uppgift är lokala. De blir värdefulla först när de förs över till minne eller skills efter uppgiften (§4.1).
+  - Opålitlig återkoppling kan lagras som minne eller skill och då påverka framtida beteende (§7).
+- **Vad den inte stöder:**
+  - Den kräver inte mänsklig granskning. Signaler från mänsklig granskning finns i bara 3 av 65 artiklar (4,6 %), medan automatisk verifiering finns i 75,4 % (fig. 7).
+  - Den förbjuder inte utveckling under körning.
+  - Spärren hos oss är alltså ett SFV-beslut, eftersom juridiska bedömningar saknar facit som kan räknas fram. Den följer inte av översikten.
+- **Krav som översikten ställer och som här bara delvis är uppfyllda (§7):**
+  - Att ta bort en komponent ska vara en egen operation, med spårad härkomst och möjlighet att återställa. Bevisloggen har härkomst och ersättning, men curatorn saknar ett flöde för att pensionera skills.
+  - Ingen komplexitetsbudget, så att antalet regler inte bara växer.
+  - Ingen prövning av förändringar i miljöer som inte användes när de togs fram.
+
+**arXiv:2607.18235** [V, verifierat av Bengt Skoglund mot källan 2026-10-08. Claude har inte haft tillgång till texten]. Ingen agentramverk (harness) vinner överallt: 30 ramverk, 12 par av modell och problem, 3,1 miljoner körningar. Valet av ramverk är en hyperparameter, och tidig rörelse förutspår slutresultatet. Rekommendationen är att starta flera, avbryta de svaga och flytta budget. Det ligger till grund för att flera parallella körningar medvetet inte är byggda ännu.
+
+**LeadDev 2026-10-05, Meta** [V, verifierat av Bengt Skoglund mot källan 2026-10-08. Claude har inte haft tillgång till texten]. Verktygen hålls stabila och skills ändras. En ny uppgift blir en ny skill, inte ett nytt system.
+
+Idégrafen och flera parallella körningar är medvetet inte byggda.
