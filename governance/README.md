@@ -71,7 +71,7 @@ Ett bevis är ett påstående som ingår i en leverans och är bundet till ett e
 | Beroende | Exempel på fält |
 |---|---|
 | `avtal` | `fil` och `sha256` (räknas om från filen) |
-| `lydelse` | `version` eller `sha256` |
+| `lydelse` | `version` eller `sha256`, plus `mening` mot `text` i aktuellt tillstånd |
 | `preskription` | `datum` (passerat datum ger också ogiltigt) |
 | `k21_bas` | `period`, `varde` |
 
@@ -84,6 +84,7 @@ python governance/evidence_guard.py block  --ledger bevis.jsonl --state aktuellt
 
 - **Bevisloggen är append-only.** En post ändras aldrig. Med `check --append` skrivs ogiltigförklaringen som en ny post.
 - **Ogiltigförklaringen är bestående.** Även om tillståndet återgår krävs ett nytt, omverifierat bevis med nytt id.
+- **Åberopad mening.** Saknas `mening` eller lydelsetexten blir status `OKÄNT`. Finns meningen inte i `text` blir status `OGILTIGT`. Existens av lagrum räcker inte.
 - **Fail-closed.** Saknas aktuellt tillstånd eller fil blir status `OKÄNT`, och beviset får då inte återanvändas.
 - **Ersättning måste anges uttryckligen.** Ett nytt bevis kan ange `"ersatter": ["E-..."]`. Det gamla beviset får då status `ERSATT`, finns kvar som historik och återanvänds inte. Ett senare bevis utan `ersatter` ersätter ingenting.
 - **`block` skriver styrningsblocket** som läggs sist i leveransen, med status, beroenden och kontrollkommandot.

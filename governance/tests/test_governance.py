@@ -193,13 +193,13 @@ class EvidenceGuardTest(unittest.TestCase):
             "id": "E-1", "leverans": "PM ÄTA 12", "datum": "2026-10-01", "pastaende": "Anspråket är preskriberat.",
             "beroenden": {
                 "avtal": {"ref": "Kontrakt", "fil": "kontrakt.txt", "sha256": eg.sha256_file(self.avtal)},
-                "lydelse": {"ref": "AB 04 kap 6 § 19", "version": "AB 04"},
+                "lydelse": {"ref": "AB 04 kap 6 § 19", "version": "AB 04", "mening": "Anspråk ska framställas skriftligen inom tre månader."},
                 "preskription": {"ref": "Slutbesiktning", "datum": "2027-03-01"},
                 "k21_bas": {"ref": "K21 projekt", "period": "2025-03", "varde": "100.0"},
             },
         }
         self.state = {
-            "lydelse": {"AB 04 kap 6 § 19": {"version": "AB 04"}},
+            "lydelse": {"AB 04 kap 6 § 19": {"version": "AB 04", "text": "AB 04 kap 6 § 19. Anspråk ska framställas skriftligen inom tre månader. Därefter är rätten förlorad."}},
             "preskription": {"Slutbesiktning": {"datum": "2027-03-01"}},
             "k21_bas": {"K21 projekt": {"period": "2025-03", "varde": "100.0"}},
         }
@@ -238,6 +238,21 @@ class EvidenceGuardTest(unittest.TestCase):
     def test_missing_state_fails_closed(self):
         del self.state["k21_bas"]
         self.assertEqual(self._eval()[0], "OKÄNT")
+
+    def test_mening_saknas_vagrar(self):
+        del self.entry["beroenden"]["lydelse"]["mening"]
+        rec = dict(eg.read_ledger(self.ledger)[-1])
+        rec["beroenden"]["lydelse"].pop("mening", None)
+        status, reasons = eg.evaluate(rec, self.state, self.dir, date(2026, 10, 8))
+        self.assertEqual(status, "OKÄNT")
+        self.assertTrue(any("åberopad mening saknas" in r for r in reasons))
+
+    def test_mening_finns_inte_i_lydelsen(self):
+        rec = dict(eg.read_ledger(self.ledger)[-1])
+        rec["beroenden"]["lydelse"]["mening"] = "Beställningen får vara muntlig."
+        status, reasons = eg.evaluate(rec, self.state, self.dir, date(2026, 10, 8))
+        self.assertEqual(status, "OGILTIGT")
+        self.assertTrue(any("finns inte i lydelsen" in r for r in reasons))
 
     def test_invalidation_is_append_only_and_sticky(self):
         sp = self.dir / "s.json"

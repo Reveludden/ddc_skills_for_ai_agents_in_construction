@@ -10,7 +10,7 @@ bara genom en ny, omverifierad bevispost med nytt id.
 Beroendetyper: avtal, lydelse, preskription, k21_bas.
 Varje beroende har `ref` plus de fält som ska jämföras, t.ex.
     {"ref": "Kontrakt 2026-114", "fil": "avtal/kontrakt.pdf", "sha256": "..."}
-    {"ref": "AB 04 kap 6 § 19", "version": "AB 04"}
+    {"ref": "AB 04 kap 6 § 19", "version": "AB 04", "mening": "åberopad mening"}
     {"ref": "Slutfaktura projekt X", "datum": "2027-03-01"}
     {"ref": "K21 bas projekt X", "period": "2025-03", "varde": "123.4"}
 En ny bevispost kan ange `ersatter: [id, ...]`. Ersättning gäller bara via
@@ -94,13 +94,23 @@ def evaluate(entry: dict, state: dict, base: Path, today: date) -> tuple[str, li
                 unknown.append(f"{LABEL[kind]} '{ref}': aktuellt tillstånd saknas")
                 continue
         for field, then in dep.items():
-            if field in ("ref", "fil"):
+            if field in ("ref", "fil", "mening"):
                 continue
             now = cur.get(field)
             if now is None:
                 unknown.append(f"{LABEL[kind]} '{ref}': fält '{field}' saknas i aktuellt tillstånd")
             elif str(now) != str(then):
                 reasons.append(f"{LABEL[kind]} '{ref}': {field} {then} → {now}")
+        if kind == "lydelse":
+            mening = str(dep.get("mening") or "").strip()
+            if not mening:
+                unknown.append(f"Lydelse '{ref}': åberopad mening saknas")
+            else:
+                text = cur.get("text")
+                if not text:
+                    unknown.append(f"Lydelse '{ref}': lydelsetext saknas")
+                elif " ".join(mening.split()) not in " ".join(str(text).split()):
+                    reasons.append(f"Lydelse '{ref}': åberopad mening finns inte i lydelsen")
         if kind == "preskription":
             d = cur.get("datum", dep.get("datum"))
             try:
@@ -206,7 +216,7 @@ def cmd_block(a) -> int:
     for x in reasons:
         lines.append(f"- Orsak: {x}")
     lines.append(
-        "- Beviset får inte återanvändas om avtal, lydelse, preskription eller K21-bas har ändrats. "
+        "- Beviset får inte återanvändas om avtal, lydelse, preskription eller K21-bas har ändrats, eller om den åberopade meningen inte finns i lydelsen. "
         f"Kontrollera före återanvändning: `python governance/evidence_guard.py check --ledger {a.ledger} "
         f"--state {a.state} --id {r['id']}`"
     )
