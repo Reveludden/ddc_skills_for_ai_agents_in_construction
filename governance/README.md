@@ -141,17 +141,20 @@ python -m unittest discover -s governance/tests
 - **Följd för SFV:** juridiska bedömningar, som preskription, ÄTA eller avtalstolkning, är resonemangstunga och saknar facit som kan räknas fram. Därför står spärren kvar: meta-agenten föreslår men skriver inte in. Förslagen kan rangordnas efter historiken, men en människa avgör. Autonom utveckling kan prövas där facit finns, till exempel i scan2bim-mätningar.
 
 **Chen, Liang och Xie, *TagGraph: Tag-Augmented Graphs for Graph Retrieval of Agent Persistent Histories* (arXiv:2609.38353v2, workshoppapper vid COLM 2026).** Kontrollerat mot artikeltexten. Artikeln gäller idégrafen, som ännu inte är byggd.
-- **Ingen grafvariant vinner överallt.** På LongMemEval-S var den bästa grafvarianten 0,844 MRR, BM25 på samma anteckningar 0,867 och OpenClaw 0,880. På ATANT Core var lokal graftraversering bäst, ungefär 0,70, före BM25 (ungefär 0,64) och spridning med PageRank (ungefär 0,55). I stressrundorna ledde BM25 (tab. 1).
-- **Det mesta av styrkan är lexikal.** Att ta bort den direkta lexikala vägen till filerna (TF-IDF) kostade 0,119 MRR, medan själva spridningen bidrog med 0,020. På ATANT Core gav det +0,158 att ta bort spridningen (tab. 3).
+- **Ingen grafvariant vinner överallt (tab. 1).**
+  - LongMemEval-S: bästa grafvariant 0,844 MRR, BM25 på samma extrakt 0,867, OpenClaw på råtext 0,880.
+  - ATANT Core: lokal traversering 0,677–0,734, före OpenClaw (0,705), BM25 (0,631–0,641) och spridning med PageRank (0,544–0,554).
+  - Stressrundor R2–R5: bästa grafvariant per extraktionsmodell 0,823–0,827, BM25 0,866–0,872, OpenClaw 0,847.
+- **Det mesta av styrkan är lexikal.** Ablationen gäller extraktion med GPT-OSS (tab. 3). På LongMemEval-S kostade det 0,119 MRR att ta bort den direkta lexikala vägen till filerna (TF-IDF). Spridningen bidrog med 0,020. På ATANT Core blev resultatet 0,158 bättre när spridningen togs bort.
 - **Taggarna avgör.** Valet av extraktionsmodell gav 0,290 MRR i skillnad. Det är mer än alla förbättringar av traverseringen tillsammans, som gav 0,132. 651 av 658 missade rätta anteckningar saknade en användbar tagg med minst en extraktionsmodell (§5.3, §5.5).
 - **Begränsningar:**
   - Bara rangordning mäts, svarskvaliteten kontrolleras bara översiktligt.
   - Små extraktionsmodeller användes.
   - Orsaken till att spridningen gav sämre resultat är inte fastställd.
-- **Följd för SFV:** idégrafen väntar tills frågorna finns. När den byggs gäller tre villkor:
-  - Den ska jämföras mot BM25 på samma anteckningar och bara behållas om den slår BM25.
-  - Taggarna ska komma ur ett fast ordförråd som inte går att avvika från, till exempel AB 04-kapitel och paragraf, diarienummer och fastighetsbeteckning, och inte bara föreslås i en prompt.
-  - Lokal traversering, där vägen till svaret går att följa, ska väljas före spridning, eftersom spridning med PageRank är svårare att spåra (§6.3).
+- **Följd för SFV:** idégrafen väntar tills frågorna finns. Innan en graf skrivs ska tre grindar passeras:
+  1. **Sök i originaltexten först.** Grafen behålls bara om den slår den starkaste baslinjen på riktiga SFV-frågor: sökning i originaltexten och BM25 på extrakten. OpenClaw, som kombinerar embeddings och BM25 på råtext, var bäst på LongMemEval-S. På ATANT var det inte alltid bäst: lokal traversering ledde i Core och BM25 i stressrundorna. Därför prövas båda baslinjerna.
+  2. **Fast ordförråd i koden, inte i prompten.** En okänd tagg avvisas. Exempel: `ab04/kap6/§19`, diarienummer, fastighetsbeteckning och K21-period.
+  3. **Lokal traversering. Ingen PageRank.**
 
 **Zhou m.fl., *Self-Evolving Coding Agents* (arXiv:2608.03392v2, översikt, preprint).** Kontrollerat mot artikeltexten.
 - **Det är en taxonomi, inte en rekommendation.** Översikten sorterar efter vad som utvecklas (ramverk, minne, skills/verktyg, modell, arbetsflöde, miljö), när det sker (under uppgiften, efter uppgiften, efter en större mängd erfarenhet) och vilken signal som driver förändringen (§3–4).
