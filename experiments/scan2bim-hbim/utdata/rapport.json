@@ -1,0 +1,495 @@
+{
+ "sammanfattning": {
+  "godkanda": 27,
+  "totalt": 27,
+  "tid_s": 40.8,
+  "versioner": {
+   "numpy": "2.4.6",
+   "ifcopenshell": "0.9.0"
+  }
+ },
+ "prov": [
+  {
+   "id": "A1",
+   "namn": "fyra vaggar, golv och tak",
+   "godkand": true,
+   "forvantat": "4 vaggar, hojd 3000 mm",
+   "uppmatt": "4 vaggar, hojd 2999.9 mm"
+  },
+  {
+   "id": "A2",
+   "namn": "dorroppning pa vagg S hittad, kanter inom 20 mm",
+   "godkand": true,
+   "forvantat": "typ dorroppning, |fel| <= 20 mm",
+   "uppmatt": "typ dorroppning, fel mm {'vanster': 0.0, 'hoger': -0.0, 'nedre': 3.7, 'ovre': -0.0, 'bredd': -0.0, 'hojd': -3.8}"
+  },
+  {
+   "id": "A3",
+   "namn": "fonsteroppning pa vagg O hittad, kanter inom 20 mm",
+   "godkand": true,
+   "forvantat": "typ fonsteroppning, |fel| <= 20 mm",
+   "uppmatt": "typ fonsteroppning, fel mm {'vanster': 0.1, 'hoger': 0.1, 'nedre': -0.0, 'ovre': -0.0, 'bredd': -0.0, 'hojd': -0.0}"
+  },
+  {
+   "id": "A4",
+   "namn": "stangd_dorr pa vagg V hittad, kanter inom 20 mm",
+   "godkand": true,
+   "forvantat": "typ stangd_dorr_kandidat, |fel| <= 20 mm",
+   "uppmatt": "typ stangd_dorr_kandidat, fel mm {'vanster': -0.6, 'hoger': 0.5, 'nedre': 2.2, 'ovre': 3.3, 'bredd': 1.1, 'hojd': 1.1}"
+  },
+  {
+   "id": "A5",
+   "namn": "plan otillrackligt endast for den bojda vaggen N",
+   "godkand": true,
+   "forvantat": "N=True, ovriga False",
+   "uppmatt": "{'S': False, 'O': False, 'N': True, 'V': False}"
+  },
+  {
+   "id": "A6",
+   "namn": "lutning: N 5 mm/m (15 mm pa 3 m), ovriga 0",
+   "godkand": true,
+   "forvantat": "N 5,0 +-0,5; ovriga |l| <= 0,5",
+   "uppmatt": "{'S': -0.0, 'O': -0.0, 'N': 5.0, 'V': -0.0}"
+  },
+  {
+   "id": "A7",
+   "namn": "vaggtjocklek S observerad i dorrsmyg",
+   "godkand": true,
+   "forvantat": "observerad, 450 +-10 mm",
+   "uppmatt": "observerad, 451.0 mm"
+  },
+  {
+   "id": "A8",
+   "namn": "tjocklek utan dorrsmyg markeras antagen",
+   "godkand": true,
+   "forvantat": "O, N, V = antagen",
+   "uppmatt": "{'O': 'antagen', 'N': 'antagen', 'V': 'antagen'}"
+  },
+  {
+   "id": "A9",
+   "namn": "vagglangd ur horn (S, N 5000; O, V 4000 mm), inom 20 mm",
+   "godkand": true,
+   "forvantat": "|fel| <= 20 mm",
+   "uppmatt": "{'S': 5000.0, 'O': 3983.4, 'N': 5000.0, 'V': 3983.6}"
+  },
+  {
+   "id": "A10",
+   "namn": "IFC: schema + relationer + kallsparning",
+   "godkand": true,
+   "forvantat": "0 fel; 4 vaggar, 3 oppningar, 2 dorrar, 1 fonster",
+   "uppmatt": "0 fel; {'IfcWall': 4, 'IfcOpeningElement': 3, 'IfcDoor': 2, 'IfcWindow': 1}"
+  },
+  {
+   "id": "A11",
+   "namn": "IFC-oppningarnas varldslage = uppmatt lage",
+   "godkand": true,
+   "forvantat": "<= 1 mm",
+   "uppmatt": "0.0 mm"
+  },
+  {
+   "id": "A12",
+   "namn": "IFC-vaggens inre yta vid hornen mot punktmolnet",
+   "godkand": true,
+   "forvantat": "<= 3 mm",
+   "uppmatt": "{'vagg:90:0.0': 0.6, 'vagg:0:0.0': 1.8, 'vagg:180:-5.0': 0.5}"
+  },
+  {
+   "id": "B1",
+   "namn": "kand utbuktning 14 mm uppmatt mot planet",
+   "godkand": true,
+   "forvantat": "14 +-2 mm",
+   "uppmatt": "13.9 mm"
+  },
+  {
+   "id": "B2",
+   "namn": "kand utbuktning 14 mm uppmatt mot ytmodellen",
+   "godkand": true,
+   "forvantat": "14 +-2 mm",
+   "uppmatt": "13.9 mm"
+  },
+  {
+   "id": "C1",
+   "namn": "IFC-kontrollen hittar borttagna void/fill-relationer",
+   "godkand": true,
+   "forvantat": ">= 2 fel",
+   "uppmatt": "2 fel: schema: With inverse:\n    VoidsElements : IfcRelVoidsElement FOR RelatedOpeningElement\nValue:\n    ()\nNot valid\n; IfcDoor 1NMz2zFzfGufoviOC7ByVF saknar IfcRelFillsElement"
+  },
+  {
+   "id": "C2",
+   "namn": "IFC-kontrollen hittar brutet obligatoriskt attribut (schema)",
+   "godkand": true,
+   "forvantat": ">= 1 schemafel",
+   "uppmatt": "2 fel: schema: Attribute not optional; IfcWall 0MFzSi3c5K8u_lHTA$iLRQ saknar SFV_Scan2BIM"
+  },
+  {
+   "id": "D1",
+   "namn": "inga oppningar i ett rum utan oppningar",
+   "godkand": true,
+   "forvantat": "0 kandidater",
+   "uppmatt": "0"
+  },
+  {
+   "id": "D2",
+   "namn": "ingen vagg flaggas skev i ett rakt rum",
+   "godkand": true,
+   "forvantat": "0 flaggade",
+   "uppmatt": "0"
+  },
+  {
+   "id": "E1",
+   "namn": "stangd dorr 5 mm i liv: ingen dorr pastas",
+   "godkand": true,
+   "forvantat": "0 kandidater (kanda granser: ej detekterbar)",
+   "uppmatt": "0: []"
+  },
+  {
+   "id": "F1",
+   "namn": "sigma 5 mm, halv tathet: dorroppning",
+   "godkand": true,
+   "forvantat": "hittad, |fel| <= 20 mm",
+   "uppmatt": "typ dorroppning, max |fel| 2.7 mm"
+  },
+  {
+   "id": "F2",
+   "namn": "sigma 5 mm, halv tathet: fonsteroppning",
+   "godkand": true,
+   "forvantat": "hittad, |fel| <= 20 mm",
+   "uppmatt": "typ fonsteroppning, max |fel| 0.1 mm"
+  },
+  {
+   "id": "F3",
+   "namn": "sigma 5 mm, halv tathet: stangd_dorr",
+   "godkand": true,
+   "forvantat": "hittad, |fel| <= 20 mm",
+   "uppmatt": "typ stangd_dorr_kandidat, max |fel| 4.8 mm"
+  },
+  {
+   "id": "F4",
+   "namn": "sigma 5 mm: bara N flaggas skev",
+   "godkand": true,
+   "forvantat": "N=True",
+   "uppmatt": "{'S': False, 'O': False, 'N': True, 'V': False}"
+  },
+  {
+   "id": "G1",
+   "namn": "samma identiteter efter omkorning (nytt brus)",
+   "godkand": true,
+   "forvantat": "7 lika",
+   "uppmatt": "7 av 7 lika"
+  },
+  {
+   "id": "H1",
+   "namn": "precision over 10 rum (30 oppningar)",
+   "godkand": true,
+   "forvantat": ">= 0,95",
+   "uppmatt": "1.000 (30 ratt, 0 falska)"
+  },
+  {
+   "id": "H2",
+   "namn": "recall over 10 rum (30 oppningar)",
+   "godkand": true,
+   "forvantat": ">= 0,90",
+   "uppmatt": "1.000 (0 missade)"
+  },
+  {
+   "id": "H3",
+   "namn": "MAE matt per oppningstyp",
+   "godkand": true,
+   "forvantat": "<= 20 mm",
+   "uppmatt": "{'dorroppning': 1.2, 'fonsteroppning': 0.0, 'stangd_dorr': 1.6}"
+  }
+ ],
+ "basrum": {
+  "golv_z": 4.284711371286547e-05,
+  "tak_z": 2.9999132176556538,
+  "hojd": 2.9998703705419407,
+  "golv": {
+   "median_abs_mm": 1.469431523251128,
+   "p95_abs_mm": 4.928093943338663,
+   "medel_signerad_mm": -0.009586164357220312,
+   "antal": 52556
+  },
+  "vaggar": [
+   {
+    "nyckel": "vagg:270:-4.0",
+    "n": [
+     -3.5592148434768716e-05,
+     -0.9999874828774277,
+     -0.005003281089986152
+    ],
+    "d0": 3.9910259809046433,
+    "nh": [
+     -3.6057237052821414e-05,
+     -0.9999999993499379,
+     0.0
+    ],
+    "eu": [
+     0.9999999993499379,
+     -3.6057237052821414e-05,
+     0.0
+    ],
+    "umin": -0.00015735946205035068,
+    "umax": 4.9998865259779635,
+    "langd_m": 5.0000438854400135,
+    "azimut_grader": 269.9979340724955,
+    "plan": {
+     "median_abs_mm": 4.656124210317802,
+     "p95_abs_mm": 10.499744325839,
+     "medel_signerad_mm": 0.10710024927183782,
+     "antal": 32825
+    },
+    "ytmodell": {
+     "median_abs_mm": 1.6738473821372377,
+     "p95_abs_mm": 4.996162307129557,
+     "medel_signerad_mm": 0.057152571975125036,
+     "antal": 32825
+    },
+    "systematisk_avvikelse_mm": 10.980747569583006,
+    "plan_otillrackligt": true,
+    "lutning_mm_per_m": 5.0033437142835355,
+    "tjocklek": {
+     "varde_m": 0.3,
+     "kalla": "antagen",
+     "metod": "ingen smyg observerad"
+    },
+    "tackning": 0.9897689768976897,
+    "kandidater": [],
+    "kant": {
+     "umin": "harledd: horn mot grannvagg",
+     "umax": "harledd: horn mot grannvagg"
+    }
+   },
+   {
+    "nyckel": "vagg:90:0.0",
+    "n": [
+     -1.727692806534238e-06,
+     0.9999999998376955,
+     1.7933888017694493e-05
+    ],
+    "d0": -1.930815552381866e-05,
+    "nh": [
+     -1.6253773944355275e-06,
+     0.9999999999986791,
+     0.0
+    ],
+    "eu": [
+     -0.9999999999986791,
+     -1.6253773944355275e-06,
+     0.0
+    ],
+    "umin": -4.999971852360127,
+    "umax": 1.845707476116614e-05,
+    "langd_m": 4.999990309434888,
+    "azimut_grader": 90.00009312726482,
+    "plan": {
+     "median_abs_mm": 1.3378079928689919,
+     "p95_abs_mm": 3.9412081521995947,
+     "medel_signerad_mm": -0.0013172961811450637,
+     "antal": 27548
+    },
+    "ytmodell": {
+     "median_abs_mm": 1.3391721085334243,
+     "p95_abs_mm": 3.9396769453134737,
+     "medel_signerad_mm": -0.0012949862317373762,
+     "antal": 27548
+    },
+    "systematisk_avvikelse_mm": 0.038377583731676795,
+    "plan_otillrackligt": false,
+    "lutning_mm_per_m": -0.017933888020578482,
+    "tjocklek": {
+     "varde_m": 0.451,
+     "kalla": "observerad",
+     "metod": "smyg i dorroppning"
+    },
+    "tackning": 0.9986842105263158,
+    "kandidater": [
+     {
+      "slag": "tom",
+      "typ": "dorroppning",
+      "skal": "hal i vaggen fran golv; dorrblad ej observerat",
+      "kalla": "observerad",
+      "u_vanster": -1.8999999821950941,
+      "u_hoger": -1.000000000066415,
+      "v_nedre": 0.0037447339046794825,
+      "v_ovre": 2.099957152886287,
+      "bredd_m": 0.899999982128679,
+      "hojd_m": 2.0962124189816076,
+      "smyg_m": 0.4512067256396723,
+      "box": [
+       -1.8999718523601268,
+       -1.0499718523601267,
+       0.05,
+       2.0500000000000003
+      ]
+     }
+    ],
+    "kant": {
+     "umin": "harledd: horn mot grannvagg",
+     "umax": "harledd: horn mot grannvagg"
+    }
+   },
+   {
+    "nyckel": "vagg:0:0.0",
+    "n": [
+     0.9999999999010823,
+     9.100474294867921e-07,
+     1.4035933747215274e-05
+    ],
+    "d0": -7.1764333747479485e-06,
+    "nh": [
+     0.9999999999992938,
+     -1.188447941762646e-06,
+     0.0
+    ],
+    "eu": [
+     1.188447941762646e-06,
+     0.9999999999992938,
+     -0.0
+    ],
+    "umin": -7.2654933906259464e-06,
+    "umax": 3.9835741728447815,
+    "langd_m": 3.983581438338172,
+    "azimut_grader": 359.99993190694875,
+    "plan": {
+     "median_abs_mm": 1.3489403411661676,
+     "p95_abs_mm": 3.891727594466258,
+     "medel_signerad_mm": 0.00048365006039229297,
+     "antal": 20344
+    },
+    "ytmodell": {
+     "median_abs_mm": 1.349909255888307,
+     "p95_abs_mm": 3.892132885126562,
+     "medel_signerad_mm": 0.00033892517042433313,
+     "antal": 20344
+    },
+    "systematisk_avvikelse_mm": 0.039257332048681336,
+    "plan_otillrackligt": false,
+    "lutning_mm_per_m": -0.014035933748597865,
+    "tjocklek": {
+     "varde_m": 0.3,
+     "kalla": "antagen",
+     "metod": "ingen smyg observerad"
+    },
+    "tackning": 0.9982767109798129,
+    "kandidater": [
+     {
+      "slag": "insankt",
+      "typ": "stangd_dorr_kandidat",
+      "skal": "rektangulart insankt falt fran golv; dorr harledd, inte observerad",
+      "kalla": "harledd",
+      "u_vanster": 2.4994061245768098,
+      "u_hoger": 3.4005164591949946,
+      "v_nedre": 0.0022413905432305792,
+      "v_ovre": 2.0532936980333893,
+      "bredd_m": 0.9011103346181848,
+      "hojd_m": 2.051052307490159,
+      "smyg_m": null,
+      "box": [
+       2.4999927345066095,
+       3.39999273450661,
+       0.0,
+       2.0500000000000003
+      ]
+     }
+    ],
+    "kant": {
+     "umin": "harledd: horn mot grannvagg",
+     "umax": "harledd: horn mot grannvagg"
+    }
+   },
+   {
+    "nyckel": "vagg:180:-5.0",
+    "n": [
+     -0.9999999988175323,
+     4.949600992901424e-06,
+     4.837806072640309e-05
+    ],
+    "d0": 4.999915442045632,
+    "nh": [
+     -0.9999999998928714,
+     1.4637531420784406e-05,
+     0.0
+    ],
+    "eu": [
+     -1.4637531420784406e-05,
+     -0.9999999998928714,
+     0.0
+    ],
+    "umin": -3.983467072768079,
+    "umax": -7.404864485792244e-05,
+    "langd_m": 3.983393024123221,
+    "azimut_grader": 179.99916133122707,
+    "plan": {
+     "median_abs_mm": 1.3395517301719728,
+     "p95_abs_mm": 3.9245083383716572,
+     "medel_signerad_mm": 0.00030403935838727573,
+     "antal": 20792
+    },
+    "ytmodell": {
+     "median_abs_mm": 1.3430737601596519,
+     "p95_abs_mm": 3.9230129794220243,
+     "medel_signerad_mm": 0.00036256896322615906,
+     "antal": 20792
+    },
+    "systematisk_avvikelse_mm": 0.045963099219459916,
+    "plan_otillrackligt": false,
+    "lutning_mm_per_m": -0.048378060783015986,
+    "tjocklek": {
+     "varde_m": 0.3,
+     "kalla": "antagen",
+     "metod": "minst 0.25 m (karm i fonstersmyg); full tjocklek ej observerad"
+    },
+    "tackning": 0.9988165680473373,
+    "kandidater": [
+     {
+      "slag": "tom",
+      "typ": "fonsteroppning",
+      "skal": "hal i vaggen med brostning; fonster harlett ur brostningen",
+      "kalla": "observerad",
+      "u_vanster": -2.4000731913025226,
+      "u_hoger": -1.200073352056832,
+      "v_nedre": 0.8999571528862872,
+      "v_ovre": 2.199957152886287,
+      "bredd_m": 1.1999998392456905,
+      "hojd_m": 1.2999999999999998,
+      "smyg_m": 0.2500194292472502,
+      "box": [
+       -2.383467072768079,
+       -1.2334670727680792,
+       0.9,
+       2.15
+      ]
+     }
+    ],
+    "kant": {
+     "umin": "harledd: horn mot grannvagg",
+     "umax": "harledd: horn mot grannvagg"
+    }
+   }
+  ],
+  "ovriga_ytor": [
+   {
+    "antal": 4530,
+    "utstrackning_m": [
+     0.89,
+     2.04
+    ]
+   },
+   {
+    "antal": 2144,
+    "utstrackning_m": [
+     0.4,
+     2.04
+    ]
+   },
+   {
+    "antal": 2092,
+    "utstrackning_m": [
+     0.41,
+     2.05
+    ]
+   }
+  ],
+  "antal_punkter": 240757
+ }
+}
