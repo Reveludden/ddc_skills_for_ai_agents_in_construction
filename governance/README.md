@@ -63,6 +63,12 @@ python governance/skill_curator.py overhead matningar.jsonl --root <skills> [--m
    - Bromsen i normalfallet är `overhead`:
      - `overhead` läser mätningar per regel och modell: `{"skill", "regel_id", "modell", "foljsamhet_utan", "foljsamhet_med"}`. En regel flaggas när minst hälften av modellerna saknar vinst, det vill säga när följsamheten med regeln minus följsamheten utan är under `--min-vinst`.
      - Om medelföljsamheten utan regeln är minst `--foljd` (0,5) räknas regeln som redan följd. Förslaget blir `stryk`, och borttagningen ska prövas kontrollerat först. Annars räknas regeln som verkningslös, och förslaget blir `ersätt`, det vill säga skriv om. Kriterierna följer arXiv:2610.04832 §6.1.2.
+     - **Osäker evidens behåller regeln.** Ange antal försök per mätning med `n`, eller `n_utan` och `n_med` per arm. Då används ensidiga 95-procentiga gränser i stället för punktskattningar, enligt undre-gränsregeln i arXiv:2609.26550 §8:
+       - Ett par räknas som overhead bara om även den *övre* gränsen för vinsten (Agresti–Caffo) ligger under `--min-vinst`.
+       - `stryk` kräver att den *undre* gränsen för följsamheten utan regel (Wilson, sammanslaget över modellerna) når `--foljd`. `ersätt` kräver att den övre gränsen ligger under.
+       - Ligger `--foljd` inom intervallet blir klassen `osaker`. Då skrivs inget förslag, och utskriften säger att mer behöver mätas.
+       - Exempel: 0,8 i följsamhet både med och utan regel, men bara 10 försök per arm. Vinsten kan då vara upp till 0,29, så regeln flaggas inte.
+       - Mätningar utan `n` hanteras som tidigare, med punktskattning. Förslaget märks då `punktskattning, n saknas`.
 
 ## 2. Styrningsblock efter leverans: ogiltigförklaring av bevis
 
