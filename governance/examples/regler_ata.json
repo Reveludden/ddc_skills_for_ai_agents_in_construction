@@ -1,0 +1,5 @@
+[
+  {"id": "SFV-ATA-01", "fore": ["preskription_kontroll", "sakbedomning"]},
+  {"id": "SFV-ATA-02", "kravs": "avtal_hamtat", "om": "citat_avtal"},
+  {"id": "SFV-ATA-03", "fore": ["avtal_hamtat", "citat_avtal"]}
+]
