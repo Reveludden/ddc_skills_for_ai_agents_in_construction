@@ -8,6 +8,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import evidence_guard as eg  # noqa: E402
+import ordningskontroll as ok_  # noqa: E402
 import skill_curator as sc  # noqa: E402
 
 PROSE = "---\nname: x\n---\n# X\n\nBara beskrivande text.\n"
@@ -297,6 +298,50 @@ class EvidenceGuardTest(unittest.TestCase):
     def test_duplicate_id_rejected(self):
         p = self.dir / "e.json"
         self.assertEqual(eg.main(["record", "--ledger", str(self.ledger), "--entry", str(p)]), 2)
+
+
+class OrdningskontrollTest(unittest.TestCase):
+    RULES = [{"id": "R1", "fore": ["kontroll", "bedomning"]},
+             {"id": "R2", "kravs": "avtal", "om": "citat"}]
+
+    def _ev(self, *steps):
+        return [{"korning": "K", "steg": s, "status": st} for s, st in steps]
+
+    def test_order_presence_and_failed_step(self):
+        ok = self._ev(("kontroll", "ok"), ("bedomning", "ok"))
+        self.assertEqual(ok_.check_run(self.RULES, ok), ("OK", []))
+        skipped = self._ev(("bedomning", "ok"))                         # steget saknas helt
+        self.assertEqual(ok_.check_run(self.RULES, skipped)[0], "BRUTEN")
+        late = self._ev(("bedomning", "ok"), ("kontroll", "ok"))          # fel ordning
+        self.assertIn("utan kontroll före", ok_.check_run(self.RULES, late)[1][0][1])
+        timeout = self._ev(("kontroll", "timeout"), ("bedomning", "ok"))  # misslyckat räknas inte
+        self.assertIn("misslyckat", ok_.check_run(self.RULES, timeout)[1][0][1])
+        no_b = self._ev(("kontroll", "fel"))                              # B förekommer inte: uppfylld
+        self.assertEqual(ok_.check_run(self.RULES, no_b)[0], "OK")
+        cited = self._ev(("citat", "ok"))
+        self.assertEqual(ok_.check_run(self.RULES, cited)[1], [("R2", "avtal saknas (krävs när citat förekommer)")])
+        failed = self._ev(("avtal", "timeout"), ("citat", "ok"))
+        self.assertIn("lyckades inte", ok_.check_run(self.RULES, failed)[1][0][1])
+
+    def test_fail_closed_and_cli(self):
+        self.assertEqual(ok_.check_run(self.RULES, [])[0], "OKÄNT")
+        self.assertEqual(ok_.check_run(self.RULES, [{"korning": "K", "status": "ok"}])[0], "OKÄNT")
+        self.assertTrue(ok_.validate_rules([{"id": "X", "fore": ["a"]}]))
+        self.assertTrue(ok_.validate_rules([{"id": "X", "fore": ["a", "b"], "kravs": "c"}]))
+        self.assertTrue(ok_.validate_rules([{"id": "X", "fore": ["a", "b"], "om": "c"}]))
+        self.assertEqual(ok_.validate_rules(self.RULES), [])
+        with tempfile.TemporaryDirectory() as t:
+            d = Path(t)
+            (d / "r.json").write_text(json.dumps(self.RULES))
+            (d / "l.jsonl").write_text("\n".join(json.dumps(e) for e in
+                                                 [{"korning": "A", "steg": "kontroll", "status": "ok"},
+                                                  {"korning": "A", "steg": "bedomning", "status": "ok"}]))
+            base = ["check", "--logg", str(d / "l.jsonl"), "--regler", str(d / "r.json")]
+            self.assertEqual(ok_.main(base + ["--json", str(d / "o.json")]), 0)
+            self.assertEqual(json.loads((d / "o.json").read_text())["per_regel"]["R1"], {"uppfyllda": 1, "n": 1})
+            self.assertEqual(ok_.main(base + ["--korning", "A", "SAKNAS"]), 1)   # okänd körning: OKÄNT
+            (d / "bad.json").write_text(json.dumps([{"id": "X"}]))
+            self.assertEqual(ok_.main(["check", "--logg", str(d / "l.jsonl"), "--regler", str(d / "bad.json")]), 2)
 
 
 if __name__ == "__main__":

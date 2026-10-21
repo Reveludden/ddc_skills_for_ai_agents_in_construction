@@ -89,6 +89,20 @@ python governance/evidence_guard.py block  --ledger bevis.jsonl --state aktuellt
 - **Ersättning måste anges uttryckligen.** Ett nytt bevis kan ange `"ersatter": ["E-..."]`. Det gamla beviset får då status `ERSATT`, finns kvar som historik och återanvänds inte. Ett senare bevis utan `ersatter` ersätter ingenting.
 - **`block` skriver styrningsblocket** som läggs sist i leveransen, med status, beroenden och kontrollkommandot.
 
+## 3. Ordningskontroll av agentens körlogg
+
+Regler om i vilken ordning steg ska ske, och om att ett steg måste finnas, har exakta svar. De kontrolleras med kod, före någon AI-domare. En AI-domare kan missa ett steg som saknas helt och ändå vara säker på att körningen var korrekt. I guiden till Jev-as-a-Judge fick en körning som hoppade över en obligatorisk kontroll cirka 86 % sannolikhet för "korrekt".
+
+```bash
+python governance/ordningskontroll.py check --logg korlogg.jsonl --regler regler.json [--korning ID ...] [--json ut.json]
+```
+
+- **Körloggen** är JSONL med en händelse per rad, i utförd ordning: `{"korning", "steg", "status"}`. Bara `status: "ok"` räknas som utfört. Fel och timeout räknas inte.
+- **Regler:** `{"id", "fore": [A, B]}` betyder att varje B ska föregås av ett lyckat A. `{"id", "kravs": C, "om": X}` betyder att C ska finnas lyckat, om X förekommer. Utan `om` gäller kravet alltid.
+- **Fail-closed:** en körning utan händelser, eller med händelser utan `steg`, blir `OKÄNT` och godkänns inte. Exitkoden är 1 om någon körning är `BRUTEN` eller `OKÄNT`, och 2 om reglerna är felaktiga.
+- **Sammanfattningen** anger följsamhet per regel som k/n. Den kan användas som mätunderlag för `overhead`.
+- Exempel: `examples/regler_ata.json` och `examples/korlogg_exempel.jsonl`. Skissen `examples/skiss_change-order-manager.md` visar hur förkontroll, belägg och frågor till en AI-domare hänger ihop i en befintlig skill. Ingen `SKILL.md` är ändrad.
+
 Exempel finns i `examples/`. Tester:
 
 ```bash

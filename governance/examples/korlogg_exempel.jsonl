@@ -1,0 +1,10 @@
+{"korning": "K-1", "steg": "avtal_hamtat", "status": "ok"}
+{"korning": "K-1", "steg": "preskription_kontroll", "status": "ok"}
+{"korning": "K-1", "steg": "citat_avtal", "status": "ok"}
+{"korning": "K-1", "steg": "sakbedomning", "status": "ok"}
+{"korning": "K-2", "steg": "avtal_hamtat", "status": "ok"}
+{"korning": "K-2", "steg": "citat_avtal", "status": "ok"}
+{"korning": "K-2", "steg": "sakbedomning", "status": "ok"}
+{"korning": "K-3", "steg": "preskription_kontroll", "status": "timeout"}
+{"korning": "K-3", "steg": "sakbedomning", "status": "ok"}
+{"korning": "K-3", "steg": "citat_avtal", "status": "ok"}
