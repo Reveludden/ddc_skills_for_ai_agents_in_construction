@@ -298,6 +298,34 @@ def cmd_retire(args: argparse.Namespace) -> int:
     return 2
 
 
+Z_ENSIDIG_95 = 1.645  # ensidig 95 %, samma som undre-gränsregeln i arXiv:2609.26550 §8
+
+
+def _arm_n(r: dict, arm: str) -> int | None:
+    """Antal försök bakom en följsamhet: `n_utan`/`n_med`, annars `n`, annars None."""
+    n = r.get(f"n_{arm}", r.get("n"))
+    return int(n) if n else None
+
+
+def _gain_upper(r: dict) -> float | None:
+    """Ensidig övre 95 %-gräns för vinsten (med − utan), Agresti–Caffo. None utan n."""
+    n_med, n_utan = _arm_n(r, "med"), _arm_n(r, "utan")
+    if not n_med or not n_utan:
+        return None
+    p_med = (r["foljsamhet_med"] * n_med + 1) / (n_med + 2)
+    p_utan = (r["foljsamhet_utan"] * n_utan + 1) / (n_utan + 2)
+    se = (p_med * (1 - p_med) / (n_med + 2) + p_utan * (1 - p_utan) / (n_utan + 2)) ** 0.5
+    return p_med - p_utan + Z_ENSIDIG_95 * se
+
+
+def _wilson(p: float, n: int) -> tuple[float, float]:
+    """Ensidiga 95 %-gränser (undre, övre) för en andel, Wilson."""
+    z2 = Z_ENSIDIG_95 ** 2
+    mid = (p + z2 / (2 * n)) / (1 + z2 / n)
+    half = Z_ENSIDIG_95 * (p * (1 - p) / n + z2 / (4 * n * n)) ** 0.5 / (1 + z2 / n)
+    return mid - half, mid + half
+
+
 def classify_pairs(rows: list[dict], min_gain: float, followed: float) -> dict[tuple[str, str], dict]:
     """Klassa regel–modell-par enligt arXiv:2610.04832 §6.1.2.
 
@@ -305,18 +333,38 @@ def classify_pairs(rows: list[dict], min_gain: float, followed: float) -> dict[t
     minst hälften av modellerna klassar den som overhead. Medelföljsamhet utan
     regeln >= followed: redan följd (pröva borttagning). Annars: verkningslös
     (skriv om).
+
+    Har mätningen antal försök (`n`, eller `n_utan`/`n_med`) används
+    konfidensgränser i stället för punktskattningar, så att osäker evidens
+    behåller regeln: paret är overhead bara om även den övre gränsen för
+    vinsten är under min_gain, och regeln är redan följd bara om den undre
+    gränsen för följsamheten utan regel når followed. Ligger followed inom
+    intervallet blir klassen `osaker` och inget förslag skrivs.
     """
     by_rule: dict[tuple[str, str], list[dict]] = {}
     for r in rows:
         by_rule.setdefault((r["skill"], r["regel_id"]), []).append(r)
     result = {}
     for key, rs in by_rule.items():
-        over = [r for r in rs if r["foljsamhet_med"] - r["foljsamhet_utan"] < min_gain]
+        over = []
+        for r in rs:
+            upper = _gain_upper(r)
+            if (upper if upper is not None else r["foljsamhet_med"] - r["foljsamhet_utan"]) < min_gain:
+                over.append(r)
         if not rs or len(over) * 2 < len(rs):
             continue
         mean_utan = sum(r["foljsamhet_utan"] for r in rs) / len(rs)
-        result[key] = {"klass": "redan_foljd" if mean_utan >= followed else "verkningslos",
-                       "overhead": len(over), "modeller": len(rs), "medel_utan": round(mean_utan, 3)}
+        ns = [_arm_n(r, "utan") for r in rs]
+        if all(ns):
+            n_tot = sum(ns)
+            lower, upper = _wilson(sum(r["foljsamhet_utan"] * n for r, n in zip(rs, ns)) / n_tot, n_tot)
+            klass = "redan_foljd" if lower >= followed else "verkningslos" if upper < followed else "osaker"
+            osakerhet = f"n={n_tot}, ensidig 95 % [{lower:.3f}, {upper:.3f}]"
+        else:
+            klass = "redan_foljd" if mean_utan >= followed else "verkningslos"
+            osakerhet = "punktskattning, n saknas"
+        result[key] = {"klass": klass, "overhead": len(over), "modeller": len(rs),
+                       "medel_utan": round(mean_utan, 3), "osakerhet": osakerhet}
     return result
 
 
@@ -325,7 +373,12 @@ def cmd_overhead(args: argparse.Namespace) -> int:
     flagged = classify_pairs(rows, args.min_vinst, args.foljd)
     root = Path(args.root) if args.root else None
     for (skill, rid), c in sorted(flagged.items()):
-        korning = f"{args.matningar} ({c['overhead']}/{c['modeller']} modeller utan vinst, medel utan regel {c['medel_utan']})"
+        if c["klass"] == "osaker":
+            print(f"[OSAKER] {skill}/{rid}: {c['overhead']}/{c['modeller']} modeller utan vinst, men följsamhet utan "
+                  f"regel {c['osakerhet']} spänner över {args.foljd} → inget förslag, regeln behålls; mät mer")
+            continue
+        korning = (f"{args.matningar} ({c['overhead']}/{c['modeller']} modeller utan vinst, "
+                   f"medel utan regel {c['medel_utan']}, {c['osakerhet']})")
         typ, orsak = (("stryk", "redan följd utan regeln – pröva borttagning kontrollerat innan strykning")
                       if c["klass"] == "redan_foljd" else
                       ("ersätt", "verkningslös – ignoreras med och utan regeln; skriv om"))
@@ -343,7 +396,8 @@ def cmd_overhead(args: argparse.Namespace) -> int:
             if typ == "ersätt":
                 body = body.replace("## Avveckling av", "## Ersättning av", 1) + "\n### Ny formulering\n<skrivs av granskare>\n"
         write_proposal(Path(args.out), f"{typ}-{skill}-{rid}", header, body)
-    print(f"{len(flagged)} regler flaggade (inga SKILL.md ändrade)")
+    n_osaker = sum(c["klass"] == "osaker" for c in flagged.values())
+    print(f"{len(flagged) - n_osaker} regler flaggade, {n_osaker} osäkra (inga SKILL.md ändrade)")
     return 0
 
 

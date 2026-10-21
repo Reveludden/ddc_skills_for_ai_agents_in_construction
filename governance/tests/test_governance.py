@@ -179,6 +179,34 @@ class CuratorProposalTest(unittest.TestCase):
         self.assertIn("- sökväg: `data.txt`", r1)            # återställningstext
         self.assertIn("typ: ersätt", r2)
         self.assertFalse(any("R3" in k for k in props))
+        self.assertIn("punktskattning, n saknas", r1)
+        self.assertEqual(self.skill.read_bytes(), before)
+
+    def test_overhead_confidence_bounds(self):
+        def row(rid, m, utan, med, **n):
+            return {"skill": "ata", "regel_id": rid, "modell": m, "foljsamhet_utan": utan, "foljsamhet_med": med, **n}
+        # Samma punktskattning som R1 ovan, men bara 10 försök: vinsten kan vara upp till ~0,29 → behåll
+        few = [row("R1", "a", 0.8, 0.8, n=10), row("R1", "b", 0.8, 0.8, n=10)]
+        self.assertEqual(sc.classify_pairs(few, 0.2, 0.5), {})
+        self.assertIn(("ata", "R1"), sc.classify_pairs([{k: v for k, v in r.items() if k != "n"} for r in few], 0.2, 0.5))
+        many = [row("R1", "a", 0.8, 0.8, n=1000), row("R1", "b", 0.8, 0.8, n=1000),      # redan följd
+                row("R2", "a", 0.1, 0.1, n=1000), row("R2", "b", 0.1, 0.1, n=1000),      # verkningslös
+                row("R5", "a", 0.5, 0.5, n=1000), row("R5", "b", 0.5, 0.5, n=1000),      # 0,5 inom intervallet
+                row("R6", "a", 0.8, 0.8, n_utan=1000, n_med=1000),
+                row("R6", "b", 0.8, 0.9, n_utan=1000, n_med=10)]                          # vinst 0,1 men övre gräns ~0,21
+        c = sc.classify_pairs(many, 0.2, 0.5)
+        self.assertEqual(c[("ata", "R1")]["klass"], "redan_foljd")
+        self.assertIn("n=2000", c[("ata", "R1")]["osakerhet"])
+        self.assertEqual(c[("ata", "R2")]["klass"], "verkningslos")
+        self.assertEqual(c[("ata", "R5")]["klass"], "osaker")
+        self.assertEqual(c[("ata", "R6")]["overhead"], 1)
+        m = Path(self.tmp.name) / "m.jsonl"
+        m.write_text("\n".join(json.dumps(r) for r in many))
+        before = self.skill.read_bytes()
+        sc.main(["overhead", str(m), "--root", str(self.root), "--out", str(self.out)])
+        props = self._props()
+        self.assertFalse(any("R5" in k for k in props))                    # osäker → inget förslag
+        self.assertIn("ensidig 95 %", next(v for k, v in props.items() if "R1" in k))
         self.assertEqual(self.skill.read_bytes(), before)
 
 
