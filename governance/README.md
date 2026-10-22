@@ -1,6 +1,6 @@
 # Styrning av skills och bevis
 
-Två tillägg. Befintliga skills och verktyg ändras inte. Allt är Python-standardbibliotek.
+Tre tillägg. Befintliga skills och verktyg ändras inte. Allt är Python-standardbibliotek.
 
 ## 1. Kontrollregel per skill och skill-curator
 
@@ -94,6 +94,31 @@ Exempel finns i `examples/`. Tester:
 ```bash
 python -m unittest discover -s governance/tests
 ```
+
+## 3. Fyndkontrakt: den som hittar bekräftar inte
+
+Varje fynd i en granskning eller bedömning har ett av fyra utfall. Metoden kommer från `cloudflare/security-audit-skill` (MIT), översatt från kodsårbarheter till SFV-granskningar.
+
+| Utfall | Krav | Får inte ha |
+|---|---|---|
+| `bekraftad` | `kallspar` (kalla, stalle, citat), `verifierad_av` som inte är `hittad_av`, `betydelse`, `atgard` | – |
+| `behover_verifiering` | `saknat_faktum` (exakt vilken uppgift), `verifieringsplan` (vem, var) | `betydelse` |
+| `avvisad` | `skal`, `verifierad_av` som inte är `hittad_av` | `betydelse`, `atgard` |
+| `notering` | `befintligt_skydd`: det som redan bär slutsatsen | `betydelse` |
+
+`betydelse` är `avgorande` (ändrar slutsatsen), `vasentlig` (en bärande del måste rättas) eller `begransad`.
+
+```bash
+python governance/findings_guard.py check   --fynd fynd.json
+python governance/findings_guard.py rapport --fynd fynd.json [--granskning]
+```
+
+- **Oberoende prövning.** `bekraftad` och `avvisad` kräver en verifierare som inte är den som hittade fyndet. Jämförelsen görs på namnet, så verifieraren ska vara en ny instans eller en människa.
+- **Citat kontrolleras.** Har ett källspår `fil` och `citat` måste citatet finnas ordagrant i filen. Går filen inte att läsa som text, till exempel en PDF, blir det en varning: citatet är ej maskinkontrollerat.
+- **Leveransgrind.** `rapport` ger exitkod 1 så länge något fynd är `behover_verifiering`. Med `--granskning` (konsistenskontroll, där fynden är fel i dokumentet) blockerar också `bekraftad` med betydelse `avgorande` eller `vasentlig`. Utan flaggan (ÄTA, där fynden är grunder) är en bekräftad grund slutsatsen, inte ett fel.
+- **Djupförsvar är inte en avvikelse.** En brist som inte kan påverka slutsatsen blir `notering` och räknas inte som avvikelse.
+
+Exempel: `examples/fynd_exempel.json`. Förslag till Kontrollregel för `ata-hindersanalys` och `konsistenskontroll` ligger i `proposals/` med `status: proposed`. Inga SKILL.md är ändrade.
 
 ## Underlag
 
