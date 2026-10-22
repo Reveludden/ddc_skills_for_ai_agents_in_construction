@@ -39,7 +39,7 @@ from pathlib import Path
 
 SECTION_RE = re.compile(r"^##\s+(Kontrollregel|Check rule)\s*$", re.IGNORECASE | re.MULTILINE)
 NEXT_SECTION_RE = re.compile(r"^##\s+", re.MULTILINE)
-FIELD_RE = re.compile(r"^\s*[-*]?\s*([\wåäöÅÄÖ_]+)\s*:\s*(.+?)\s*$", re.MULTILINE)
+FIELD_RE = re.compile(r"^[ \t]*[-*]?[ \t]*([\wåäöÅÄÖ_]+)[ \t]*:[ \t]*(.+?)[ \t\r]*$", re.MULTILINE)
 BACKTICK_RE = re.compile(r"`([^`]+)`")
 
 ALIASES = {

@@ -36,6 +36,7 @@ from datetime import date
 from pathlib import Path
 
 KINDS = ("avtal", "lydelse", "preskription", "k21_bas")
+NOT_COMPARED = ("ref", "fil", "mening")
 LABEL = {"avtal": "Avtal", "lydelse": "Lydelse", "preskription": "Preskription", "k21_bas": "K21-bas"}
 
 
@@ -71,8 +72,12 @@ def validate_entry(entry: dict) -> list[str]:
             errs.append(f"okänd beroendetyp: {kind} (tillåtna: {', '.join(KINDS)})")
         elif not isinstance(dep, dict) or not dep.get("ref"):
             errs.append(f"{kind}: saknar ref")
-        elif len([k for k in dep if k != "ref"]) == 0:
-            errs.append(f"{kind}: inget jämförbart fält utöver ref")
+        elif not [k for k in dep if k not in NOT_COMPARED]:
+            errs.append(f"{kind}: inget jämförbart fält utöver ref, fil och mening")
+        elif "fil" in dep and not dep.get("sha256"):
+            errs.append(f"{kind}: fil kräver sha256")
+        elif kind == "preskription" and not dep.get("datum"):
+            errs.append("preskription: saknar datum")
     return errs
 
 
@@ -93,8 +98,12 @@ def evaluate(entry: dict, state: dict, base: Path, today: date) -> tuple[str, li
             if cur is None:
                 unknown.append(f"{LABEL[kind]} '{ref}': aktuellt tillstånd saknas")
                 continue
+        if not [k for k in dep if k not in NOT_COMPARED]:
+            unknown.append(f"{LABEL[kind]} '{ref}': inget fält att jämföra")
+        if "fil" in dep and not dep.get("sha256"):
+            unknown.append(f"{LABEL[kind]} '{ref}': fil utan sha256")
         for field, then in dep.items():
-            if field in ("ref", "fil", "mening"):
+            if field in NOT_COMPARED:
                 continue
             now = cur.get(field)
             if now is None:
@@ -113,6 +122,8 @@ def evaluate(entry: dict, state: dict, base: Path, today: date) -> tuple[str, li
                     reasons.append(f"Lydelse '{ref}': åberopad mening finns inte i lydelsen")
         if kind == "preskription":
             d = cur.get("datum", dep.get("datum"))
+            if not d:
+                unknown.append(f"Preskription '{ref}': datum saknas")
             try:
                 if d and date.fromisoformat(str(d)) < today:
                     reasons.append(f"Preskription '{ref}': datum {d} har passerats")

@@ -298,6 +298,28 @@ class EvidenceGuardTest(unittest.TestCase):
         p = self.dir / "e.json"
         self.assertEqual(eg.main(["record", "--ledger", str(self.ledger), "--entry", str(p)]), 2)
 
+    def test_nothing_compared_is_not_valid(self):
+        for deps in ({"avtal": {"ref": "K", "fil": "kontrakt.txt"}},
+                     {"preskription": {"ref": "Slutbesiktning", "mening": "m"}},
+                     {"preskription": {"ref": "Slutbesiktning", "period": "x"}}):
+            entry = dict(self.entry, beroenden=deps)
+            self.assertTrue(eg.validate_entry(entry), deps)
+            status, _ = eg.evaluate(entry, {"preskription": {"Slutbesiktning": {"period": "x"}}}, self.dir, date(2026, 10, 8))
+            self.assertEqual(status, "OKÄNT", deps)
+
+
+class CuratorRegexTest(unittest.TestCase):
+    def test_blank_lines_do_not_backtrack(self):
+        import time
+        t = time.perf_counter()
+        sc.parse_rule_section("## Kontrollregel\nText\n" + "\n" * 1500)
+        self.assertLess(time.perf_counter() - t, 1.0)
+
+    def test_crlf_value_trimmed(self):
+        f = sc.parse_rule_section("## Kontrollregel\r\n  - id: R1 \r\n- kommando: `python3 -V`\r\n")
+        self.assertEqual(f["id"], ["R1"])
+        self.assertEqual(f["kommando"], ["python3 -V"])
+
 
 if __name__ == "__main__":
     unittest.main()
