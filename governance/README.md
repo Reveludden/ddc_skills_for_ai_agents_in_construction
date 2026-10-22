@@ -40,6 +40,8 @@ python governance/skill_curator.py propose telemetri.jsonl --min 3
 
 - Underlaget är bara händelser vars utfall en människa har granskat (`human_accepted`, `human_corrected`). Det som agenten gjort på egen hand ignoreras.
 - Ett kommando eller en sökväg som förekommer minst `--min` gånger blir ett förslag i `governance/proposals/` med `status: proposed`.
+- Telemetrin kan inte sätta granskningen. En händelse som själv anger `status`, `granskad_av` eller `granskad` ignoreras. Värden med radbrytning, eller kommandon och sökvägar med backtick, ignoreras också, eftersom de annars kan lägga till rubrikfält eller en `granskad_av`-rad i förslaget.
+- Förslagsfiler skapas exklusivt. En befintlig fil eller symlänk på samma namn skrivs aldrig över och följs inte.
 - `SKILL.md` ändras aldrig. En regel räknas först när en människa har fört in den och fyllt i `granskad_av`.
 
 ### Avveckling och tak: samma mänskliga grind som tillägg
@@ -119,6 +121,11 @@ python governance/findings_guard.py rapport --fynd fynd.json [--granskning]
 - **Djupförsvar är inte en avvikelse.** En brist som inte kan påverka slutsatsen blir `notering` och räknas inte som avvikelse.
 
 Exempel: `examples/fynd_exempel.json`. Förslag till Kontrollregel för `ata-hindersanalys` och `konsistenskontroll` ligger i `proposals/` med `status: proposed`. Inga SKILL.md är ändrade.
+
+## 4. Kända begränsningar
+
+- **`human_accepted` är ett påstående i telemetrin.** Den som kan skriva i telemetrifilen kan också påstå att en människa har godkänt. Koden kan inte skilja på det. Skyddet är att förslag aldrig förs in automatiskt: en människa läser förslaget och för in regeln.
+- **`update_all_skills.py` och `publish_*.ps1` i repots rot är inte granskade för skills från tredje part.** De kommer från det ursprungliga repot, har sökvägen till upphovspersonens dator hårdkodad, och anropas inte av något i `governance/`. `update_all_skills.py` skriver `SKILL.md`, `claw.json` och `instructions.md` utan att kontrollera symlänkar. Kör dem inte på skill-kataloger med innehåll från tredje part.
 
 ## Underlag
 

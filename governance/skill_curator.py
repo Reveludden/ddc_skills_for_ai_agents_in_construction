@@ -29,6 +29,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
 import shutil
 import sys
@@ -51,6 +52,9 @@ ALIASES = {
     "granskad": "granskad", "reviewed": "granskad",
     "källa": "kalla", "kalla": "kalla", "source": "kalla",
 }
+
+# Fält som bara en människa sätter. Telemetri som anger dem ignoreras.
+RESERVED_KEYS = {"status", "granskad_av", "reviewed_by", "granskad", "reviewed"}
 
 WINDOWS_PATH_RE = re.compile(r"^([A-Za-z]:[\\/]|\\\\)")
 
@@ -121,15 +125,27 @@ def _guard_out(out: Path) -> None:
 
 def write_proposal(out: Path, slug: str, header: dict[str, str], body: str) -> Path | None:
     _guard_out(out)
+    bad = [k for k, v in header.items() if not _one_line(v)]
+    if bad:
+        print(f"FEL: förslag {slug!r} vägras; radbrytning i {', '.join(bad)} kan lägga till rubrikfält", file=sys.stderr)
+        return None
     out.mkdir(parents=True, exist_ok=True)
     slug = re.sub(r"[^\w-]+", "-", slug)[:80].strip("-")
     target = out / f"{date.today().isoformat()}_{slug}.md"
-    if target.exists():
-        return None
     head = "".join(f"{k}: {v}\n" for k, v in {"status": "proposed", **header}.items())
-    target.write_text(f"---\n{head}---\n{body}", encoding="utf-8")
+    # Exklusiv skapelse: befintlig fil eller symlänk (även dangling) skrivs aldrig över eller följs.
+    try:
+        fd = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0), 0o644)
+    except FileExistsError:
+        return None
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        f.write(f"---\n{head}---\n{body}")
     print(f"förslag: {target}")
     return target
+
+
+def _one_line(v) -> bool:
+    return not re.search(r"[\r\n\x0b\x0c\x85\u2028\u2029]", str(v))
 
 
 def retire_body(skill_md: Path, section: str, rule_id: str, korning: str, orsak: str) -> str:
@@ -238,8 +254,14 @@ def cmd_propose(args: argparse.Namespace) -> int:
         ev = json.loads(line)
         if ev.get("utfall") not in ("human_accepted", "human_corrected"):
             continue
+        if RESERVED_KEYS & set(ev):
+            print(f"VARNING: händelse ignoreras; telemetri får inte ange {', '.join(sorted(RESERVED_KEYS & set(ev)))}")
+            continue
         for kind in ("kommando", "sokvag"):
             if ev.get(kind):
+                if not (_one_line(ev["skill"]) and _one_line(ev[kind])) or "`" in str(ev[kind]):
+                    print(f"VARNING: händelse ignoreras; radbrytning eller backtick i skill eller {kind}")
+                    continue
                 counter[(ev["skill"], kind, ev[kind])] += 1
     out = Path(args.out)
     root = Path(args.root) if args.root else None
