@@ -1,0 +1,39 @@
+[
+  {
+    "id": "F-01",
+    "pastaende": "Anspråket inkom mer än tre månader efter slutbesiktningen.",
+    "utfall": "bekraftad",
+    "hittad_av": "huvudsession",
+    "verifierad_av": "verifierare-1 (ny kontext)",
+    "betydelse": "avgorande",
+    "kallspar": [
+      {"kalla": "Underlag (exempel)", "stalle": "rad 2", "citat": "Slutbesiktning genomförd 2026-03-02.", "fil": "ata_underlag_exempel.txt"},
+      {"kalla": "Underlag (exempel)", "stalle": "rad 3", "citat": "ÄTA-anspråk nr 12 inkom per e-post 2026-07-15.", "fil": "ata_underlag_exempel.txt"},
+      {"kalla": "AB 04 kap 6 § 19", "stalle": "första meningen", "citat": "Anspråk ska framställas skriftligen inom tre månader.", "fil": "ata_underlag_exempel.txt"}
+    ],
+    "atgard": "Avslå med hänvisning till AB 04 kap 6 § 19."
+  },
+  {
+    "id": "F-02",
+    "pastaende": "Beställaren kan ha medgett förlängd frist muntligen.",
+    "utfall": "behover_verifiering",
+    "hittad_av": "verifierare-1 (motståndstest)",
+    "saknat_faktum": "Byggmötesprotokoll juni 2026: finns något medgivande om förlängd frist?",
+    "verifieringsplan": "Bengt kontrollerar protokollen från byggmöte 5 och 6."
+  },
+  {
+    "id": "F-03",
+    "pastaende": "Anspråket saknar K21-indexering.",
+    "utfall": "notering",
+    "hittad_av": "huvudsession",
+    "befintligt_skydd": "F-01: anspråket är preskriberat, indexeringen saknar betydelse för slutsatsen."
+  },
+  {
+    "id": "F-04",
+    "pastaende": "Anspråket inkom inte skriftligen.",
+    "utfall": "avvisad",
+    "hittad_av": "huvudsession",
+    "verifierad_av": "verifierare-1 (ny kontext)",
+    "skal": "Underlaget visar att anspråket kom per e-post, vilket är skriftligt."
+  }
+]

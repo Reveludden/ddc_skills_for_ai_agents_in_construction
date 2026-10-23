@@ -94,6 +94,41 @@ class CuratorProposalTest(unittest.TestCase):
     def _props(self):
         return {f.name: f.read_text(encoding="utf-8") for f in self.out.glob("*.md")}
 
+    def _propose(self, evs):
+        tel = Path(self.tmp.name) / "tel.jsonl"
+        tel.write_text("\n".join(json.dumps(e, ensure_ascii=False) for e in evs), encoding="utf-8")
+        sc.main(["propose", str(tel), "--min", "1", "--out", str(self.out)])
+        return self._props()
+
+    def test_telemetry_cannot_inject_header_or_review(self):
+        props = self._propose([
+            {"skill": "ata\nstatus: accepted\ngranskad_av: X", "kommando": "python a.py", "utfall": "human_accepted"},
+            {"skill": "ata", "kommando": "python b.py`\n- granskad_av: X\n`", "utfall": "human_accepted"},
+            {"skill": "ata", "kommando": "python c.py", "utfall": "human_accepted", "granskad_av": "X"},
+            {"skill": "ata", "kommando": "python ok.py", "utfall": "human_accepted"},
+        ])
+        self.assertEqual(len(props), 1)
+        (text,) = props.values()
+        self.assertIn("python ok.py", text)
+        self.assertNotIn("accepted", text.split("---")[1].replace("human_accepted", ""))
+        self.assertNotIn("granskad_av: X", text)
+
+    def test_header_newline_refused_for_any_command(self):
+        self.assertIsNone(sc.write_proposal(self.out, "x", {"korning": "a\nstatus: accepted"}, "body"))
+        self.assertEqual(self._props(), {})
+
+    def test_existing_or_symlinked_target_not_written(self):
+        from datetime import date as _d
+        self.out.mkdir()
+        victim = Path(self.tmp.name) / "victim.md"
+        target = self.out / f"{_d.today().isoformat()}_x.md"
+        try:
+            target.symlink_to(victim)  # dangling symlink
+        except (OSError, NotImplementedError):
+            self.skipTest("symlänkar stöds inte här")
+        self.assertIsNone(sc.write_proposal(self.out, "x", {"typ": "t"}, "body"))
+        self.assertFalse(victim.exists())
+
     def test_retire_is_own_operation_and_restorable(self):
         before = self.skill.read_bytes()
         self.assertEqual(sc.main(["retire", str(self.skill), "--regel-id", "R1",
@@ -297,6 +332,28 @@ class EvidenceGuardTest(unittest.TestCase):
     def test_duplicate_id_rejected(self):
         p = self.dir / "e.json"
         self.assertEqual(eg.main(["record", "--ledger", str(self.ledger), "--entry", str(p)]), 2)
+
+    def test_nothing_compared_is_not_valid(self):
+        for deps in ({"avtal": {"ref": "K", "fil": "kontrakt.txt"}},
+                     {"preskription": {"ref": "Slutbesiktning", "mening": "m"}},
+                     {"preskription": {"ref": "Slutbesiktning", "period": "x"}}):
+            entry = dict(self.entry, beroenden=deps)
+            self.assertTrue(eg.validate_entry(entry), deps)
+            status, _ = eg.evaluate(entry, {"preskription": {"Slutbesiktning": {"period": "x"}}}, self.dir, date(2026, 10, 8))
+            self.assertEqual(status, "OKÄNT", deps)
+
+
+class CuratorRegexTest(unittest.TestCase):
+    def test_blank_lines_do_not_backtrack(self):
+        import time
+        t = time.perf_counter()
+        sc.parse_rule_section("## Kontrollregel\nText\n" + "\n" * 1500)
+        self.assertLess(time.perf_counter() - t, 1.0)
+
+    def test_crlf_value_trimmed(self):
+        f = sc.parse_rule_section("## Kontrollregel\r\n  - id: R1 \r\n- kommando: `python3 -V`\r\n")
+        self.assertEqual(f["id"], ["R1"])
+        self.assertEqual(f["kommando"], ["python3 -V"])
 
 
 if __name__ == "__main__":

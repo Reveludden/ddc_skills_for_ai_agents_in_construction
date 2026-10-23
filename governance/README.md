@@ -1,6 +1,6 @@
 # Styrning av skills och bevis
 
-Två tillägg. Befintliga skills och verktyg ändras inte. Allt är Python-standardbibliotek.
+Tre tillägg. Befintliga skills och verktyg ändras inte. Allt är Python-standardbibliotek.
 
 ## 1. Kontrollregel per skill och skill-curator
 
@@ -40,6 +40,8 @@ python governance/skill_curator.py propose telemetri.jsonl --min 3
 
 - Underlaget är bara händelser vars utfall en människa har granskat (`human_accepted`, `human_corrected`). Det som agenten gjort på egen hand ignoreras.
 - Ett kommando eller en sökväg som förekommer minst `--min` gånger blir ett förslag i `governance/proposals/` med `status: proposed`.
+- Telemetrin kan inte sätta granskningen. En händelse som själv anger `status`, `granskad_av` eller `granskad` ignoreras. Värden med radbrytning, eller kommandon och sökvägar med backtick, ignoreras också, eftersom de annars kan lägga till rubrikfält eller en `granskad_av`-rad i förslaget.
+- Förslagsfiler skapas exklusivt. En befintlig fil eller symlänk på samma namn skrivs aldrig över och följs inte.
 - `SKILL.md` ändras aldrig. En regel räknas först när en människa har fört in den och fyllt i `granskad_av`.
 
 ### Avveckling och tak: samma mänskliga grind som tillägg
@@ -94,6 +96,40 @@ Exempel finns i `examples/`. Tester:
 ```bash
 python -m unittest discover -s governance/tests
 ```
+
+## 3. Fyndkontrakt: den som hittar bekräftar inte
+
+Varje fynd i en granskning eller bedömning har ett av fyra utfall. Metoden kommer från `cloudflare/security-audit-skill` (MIT), översatt från kodsårbarheter till SFV-granskningar.
+
+| Utfall | Krav | Får inte ha |
+|---|---|---|
+| `bekraftad` | `kallspar` (kalla, stalle, citat), `verifierad_av` som inte är `hittad_av`, `betydelse`, `atgard` | – |
+| `behover_verifiering` | `saknat_faktum` (exakt vilken uppgift), `verifieringsplan` (vem, var) | `betydelse` |
+| `avvisad` | `skal`, `verifierad_av` som inte är `hittad_av` | `betydelse`, `atgard` |
+| `notering` | `befintligt_skydd`: det som redan bär slutsatsen | `betydelse` |
+
+`betydelse` är `avgorande` (ändrar slutsatsen), `vasentlig` (en bärande del måste rättas) eller `begransad`.
+
+```bash
+python governance/findings_guard.py check   --fynd fynd.json
+python governance/findings_guard.py rapport --fynd fynd.json [--granskning]
+```
+
+- **Oberoende prövning.** `bekraftad` och `avvisad` kräver en verifierare som inte är den som hittade fyndet. Jämförelsen görs på namnet, så verifieraren ska vara en ny instans eller en människa.
+- **Citat kontrolleras.** Har ett källspår `fil` och `citat` måste citatet finnas ordagrant i filen. Går filen inte att läsa som text, till exempel en PDF, blir det en varning: citatet är ej maskinkontrollerat.
+- **Leveransgrind.** `rapport` ger exitkod 1 så länge något fynd är `behover_verifiering`. Med `--granskning` (konsistenskontroll, där fynden är fel i dokumentet) blockerar också `bekraftad` med betydelse `avgorande` eller `vasentlig`. Utan flaggan (ÄTA, där fynden är grunder) är en bekräftad grund slutsatsen, inte ett fel.
+- **Djupförsvar är inte en avvikelse.** En brist som inte kan påverka slutsatsen blir `notering` och räknas inte som avvikelse.
+
+Exempel: `examples/fynd_exempel.json`. Förslag till Kontrollregel för `ata-hindersanalys` och `konsistenskontroll` ligger i `proposals/` med `status: proposed`. Inga SKILL.md är ändrade.
+
+## 4. Avvisat och uppskjutet
+
+`avvisat.md` samlar lösningar som utretts och sedan avvisats eller skjutits upp, med skäl och villkor för att pröva dem igen. Poster ändras aldrig. En ny prövning läggs till som en ny post med `ersatter:`. Testerna kontrollerar att varje post har id, utfall, datum, beslutat_av, skäl och ett villkor för omprövning.
+
+## 5. Kända begränsningar
+
+- **`human_accepted` är ett påstående i telemetrin.** Den som kan skriva i telemetrifilen kan också påstå att en människa har godkänt. Koden kan inte skilja på det. Skyddet är att förslag aldrig förs in automatiskt: en människa läser förslaget och för in regeln.
+- **`update_all_skills.py` och `publish_*.ps1` i repots rot är inte granskade för skills från tredje part.** De kommer från det ursprungliga repot, har sökvägen till upphovspersonens dator hårdkodad, och anropas inte av något i `governance/`. `update_all_skills.py` skriver `SKILL.md`, `claw.json` och `instructions.md` utan att kontrollera symlänkar. Kör dem inte på skill-kataloger med innehåll från tredje part.
 
 ## Underlag
 
@@ -177,4 +213,4 @@ python -m unittest discover -s governance/tests
 
 **LeadDev 2026-10-05, Meta** [V, verifierat av Bengt Skoglund mot källan 2026-10-08. Claude har inte haft tillgång till texten]. Verktygen hålls stabila och skills ändras. En ny uppgift blir en ny skill, inte ett nytt system.
 
-Idégrafen och flera parallella körningar är medvetet inte byggda.
+Idégrafen och flera parallella körningar är medvetet inte byggda. Se `avvisat.md`, A-02 och A-03.
