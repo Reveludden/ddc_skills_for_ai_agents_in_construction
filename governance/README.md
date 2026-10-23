@@ -122,7 +122,11 @@ python governance/findings_guard.py rapport --fynd fynd.json [--granskning]
 
 Exempel: `examples/fynd_exempel.json`. Förslag till Kontrollregel för `ata-hindersanalys` och `konsistenskontroll` ligger i `proposals/` med `status: proposed`. Inga SKILL.md är ändrade.
 
-## 4. Kända begränsningar
+## 4. Avvisat och uppskjutet
+
+`avvisat.md` samlar lösningar som utretts och sedan avvisats eller skjutits upp, med skäl och villkor för att pröva dem igen. Poster ändras aldrig. En ny prövning läggs till som en ny post med `ersatter:`. Testerna kontrollerar att varje post har id, utfall, datum, beslutat_av, skäl och ett villkor för omprövning.
+
+## 5. Kända begränsningar
 
 - **`human_accepted` är ett påstående i telemetrin.** Den som kan skriva i telemetrifilen kan också påstå att en människa har godkänt. Koden kan inte skilja på det. Skyddet är att förslag aldrig förs in automatiskt: en människa läser förslaget och för in regeln.
 - **`update_all_skills.py` och `publish_*.ps1` i repots rot är inte granskade för skills från tredje part.** De kommer från det ursprungliga repot, har sökvägen till upphovspersonens dator hårdkodad, och anropas inte av något i `governance/`. `update_all_skills.py` skriver `SKILL.md`, `claw.json` och `instructions.md` utan att kontrollera symlänkar. Kör dem inte på skill-kataloger med innehåll från tredje part.
@@ -209,4 +213,4 @@ Exempel: `examples/fynd_exempel.json`. Förslag till Kontrollregel för `ata-hin
 
 **LeadDev 2026-10-05, Meta** [V, verifierat av Bengt Skoglund mot källan 2026-10-08. Claude har inte haft tillgång till texten]. Verktygen hålls stabila och skills ändras. En ny uppgift blir en ny skill, inte ett nytt system.
 
-Idégrafen och flera parallella körningar är medvetet inte byggda.
+Idégrafen och flera parallella körningar är medvetet inte byggda. Se `avvisat.md`, A-02 och A-03.
