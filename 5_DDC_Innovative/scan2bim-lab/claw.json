@@ -1,0 +1,23 @@
+{
+  "name": "scan2bim-lab",
+  "version": "0.1.0",
+  "description": "Extract walls, floors, ceilings and straight pipes from laser-scan point clouds, propose pipe connections for human review, and benchmark accuracy against synthetic ground truth.",
+  "author": "datadrivenconstruction",
+  "license": "MIT",
+  "permissions": [
+    "filesystem"
+  ],
+  "entry": "instructions.md",
+  "tags": [
+    "construction",
+    "point-cloud",
+    "scan-to-bim",
+    "mep",
+    "data-processing"
+  ],
+  "models": [
+    "claude-*",
+    "gpt-*"
+  ],
+  "minOpenClawVersion": "0.8.0"
+}
