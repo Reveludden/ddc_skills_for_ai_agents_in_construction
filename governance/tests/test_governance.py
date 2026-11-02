@@ -45,6 +45,15 @@ class CuratorTest(unittest.TestCase):
             self.assertEqual(res["ok"].warnings, [])
             self.assertNotIn("ignoreras", res["ok"].kommando)
 
+    def test_empty_reviewer_is_unreviewed(self):
+        # Tomt granskad_av får inte läsa in nästa rad som granskare.
+        text = ("# X\n\n## Kontrollregel\n- id: R1\n- regel: Kör versionskontroll.\n"
+                "- kommando: `python3 -V`\n- granskad_av:\n- granskad:\n- källa: agent\n")
+        with tempfile.TemporaryDirectory() as t:
+            self._skill(Path(t), "tom", text)
+            (r,) = sc.scan(Path(t))
+            self.assertEqual(r.status, "UNREVIEWED")
+
     def test_missing_path_warns(self):
         with tempfile.TemporaryDirectory() as t:
             self._skill(Path(t), "ok", RULE_OK)

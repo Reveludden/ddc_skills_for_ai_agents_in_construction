@@ -37,6 +37,7 @@ These skills represent cutting-edge applications of artificial intelligence, mac
 | [defect-detection-ai](defect-detection-ai/) | Automated defect identification from images |
 | [progress-monitoring-cv](progress-monitoring-cv/) | Visual progress tracking using photos |
 | [drone-site-survey](drone-site-survey/) | Drone imagery analysis for site surveys |
+| [scan2bim-lab](scan2bim-lab/) | Point cloud to walls/floors/pipes with ground-truth benchmark |
 
 ### IoT & Sensors
 

@@ -1,0 +1,414 @@
+{
+  "krav": {
+    "plan_andel_hittade": 1.0,
+    "ror_andel_hittade": 0.85,
+    "max_abs_radiefel_mm": 3.0,
+    "max_axelfel_mm": 10.0,
+    "dn_andel_ratt": 0.85
+  },
+  "parametrar": {
+    "noise": 0.002,
+    "spacing": 0.012,
+    "voxel": 0.012,
+    "skannrar": 2
+  },
+  "korningar": [
+    {
+      "seed": 0,
+      "statistik": {
+        "punkter_in": 155471,
+        "punkter_efter_voxel": 140943,
+        "punkter_pa_plan": 113692,
+        "punkter_kvar_for_ror": 27251,
+        "tid_normaler_s": 1.54,
+        "tid_plan_s": 1.89,
+        "tid_ror_s": 8.36,
+        "voxel_m": 0.012
+      },
+      "plan": {
+        "antal_facit": 6,
+        "hittade": 6,
+        "extra": 2,
+        "rader": [
+          {
+            "facit": "golv",
+            "hittad": true,
+            "avstand_mm": 0.0,
+            "vinkel_deg": 0.0
+          },
+          {
+            "facit": "tak",
+            "hittad": true,
+            "avstand_mm": 0.0,
+            "vinkel_deg": 0.0
+          },
+          {
+            "facit": "vägg y=0",
+            "hittad": true,
+            "avstand_mm": 0.0,
+            "vinkel_deg": 0.0
+          },
+          {
+            "facit": "vägg y=4",
+            "hittad": true,
+            "avstand_mm": 0.0,
+            "vinkel_deg": 0.0
+          },
+          {
+            "facit": "vägg x=0",
+            "hittad": true,
+            "avstand_mm": 0.0,
+            "vinkel_deg": 0.0
+          },
+          {
+            "facit": "vägg x=6",
+            "hittad": true,
+            "avstand_mm": 0.0,
+            "vinkel_deg": 0.0
+          }
+        ]
+      },
+      "ror": {
+        "antal_facit": 9,
+        "hittade": 8,
+        "extra": 0,
+        "dn_ratt": 6,
+        "max_abs_radiefel_mm": 31.7,
+        "medel_abs_radiefel_mm": 4.62,
+        "max_axelfel_mm": 35.6,
+        "rader": [
+          {
+            "facit": "P1",
+            "dn_facit": "DN100",
+            "hittad": true,
+            "dn_hittad": "DN100",
+            "dn_ratt": true,
+            "radiefel_mm": 0.05,
+            "axelfel_mm": 0.1,
+            "langd_facit_m": 5.2,
+            "langdfel_m": 0.003,
+            "tackning_langd": 1.0,
+            "synlig_omkrets_deg": 200.0
+          },
+          {
+            "facit": "P2",
+            "dn_facit": "DN50",
+            "hittad": true,
+            "dn_hittad": "DN65",
+            "dn_ratt": false,
+            "radiefel_mm": 4.95,
+            "axelfel_mm": 5.5,
+            "langd_facit_m": 5.2,
+            "langdfel_m": -0.005,
+            "tackning_langd": 0.999,
+            "synlig_omkrets_deg": 200.0
+          },
+          {
+            "facit": "P3",
+            "dn_facit": "DN25",
+            "hittad": false
+          },
+          {
+            "facit": "P4",
+            "dn_facit": "DN150",
+            "hittad": true,
+            "dn_hittad": "DN150",
+            "dn_ratt": true,
+            "radiefel_mm": 0.05,
+            "axelfel_mm": 0.1,
+            "langd_facit_m": 2.8,
+            "langdfel_m": 0.003,
+            "tackning_langd": 1.0,
+            "synlig_omkrets_deg": 220.0
+          },
+          {
+            "facit": "P5",
+            "dn_facit": "DN80",
+            "hittad": true,
+            "dn_hittad": "DN80",
+            "dn_ratt": true,
+            "radiefel_mm": 0.05,
+            "axelfel_mm": 0.1,
+            "langd_facit_m": 2.05,
+            "langdfel_m": 0.002,
+            "tackning_langd": 1.0,
+            "synlig_omkrets_deg": 290.0
+          },
+          {
+            "facit": "P6",
+            "dn_facit": "DN80",
+            "hittad": true,
+            "dn_hittad": "DN80",
+            "dn_ratt": true,
+            "radiefel_mm": 0.05,
+            "axelfel_mm": 0.2,
+            "langd_facit_m": 1.85,
+            "langdfel_m": 0.0,
+            "tackning_langd": 1.0,
+            "synlig_omkrets_deg": 280.0
+          },
+          {
+            "facit": "P7",
+            "dn_facit": "DN32",
+            "hittad": true,
+            "dn_hittad": "DN100",
+            "dn_ratt": false,
+            "radiefel_mm": 31.7,
+            "axelfel_mm": 35.6,
+            "langd_facit_m": 3.0,
+            "langdfel_m": -0.025,
+            "tackning_langd": 0.992,
+            "synlig_omkrets_deg": 100.0
+          },
+          {
+            "facit": "P8a",
+            "dn_facit": "DN65",
+            "hittad": true,
+            "dn_hittad": "DN65",
+            "dn_ratt": true,
+            "radiefel_mm": 0.05,
+            "axelfel_mm": 0.5,
+            "langd_facit_m": 2.2,
+            "langdfel_m": -0.001,
+            "tackning_langd": 0.999,
+            "synlig_omkrets_deg": 280.0
+          },
+          {
+            "facit": "P8b",
+            "dn_facit": "DN65",
+            "hittad": true,
+            "dn_hittad": "DN65",
+            "dn_ratt": true,
+            "radiefel_mm": 0.05,
+            "axelfel_mm": 0.4,
+            "langd_facit_m": 2.5,
+            "langdfel_m": 0.002,
+            "tackning_langd": 1.0,
+            "synlig_omkrets_deg": 270.0
+          }
+        ]
+      },
+      "kopplingar": {
+        "antal_facit": 1,
+        "hittade": 1,
+        "kandidater_totalt": 1,
+        "rader": [
+          {
+            "facit": "P5-P6",
+            "typ": "böj",
+            "hittad": true
+          }
+        ]
+      },
+      "kontroll": {
+        "plan_andel_hittade": 1.0,
+        "ror_andel_hittade": 0.8888888888888888,
+        "max_abs_radiefel_mm": 31.7,
+        "max_axelfel_mm": 35.6,
+        "dn_andel_ratt": 0.75
+      },
+      "godkand": {
+        "plan_andel_hittade": true,
+        "ror_andel_hittade": true,
+        "max_abs_radiefel_mm": false,
+        "max_axelfel_mm": false,
+        "dn_andel_ratt": false
+      }
+    },
+    {
+      "seed": 1,
+      "statistik": {
+        "punkter_in": 155481,
+        "punkter_efter_voxel": 140818,
+        "punkter_pa_plan": 113656,
+        "punkter_kvar_for_ror": 27162,
+        "tid_normaler_s": 2.07,
+        "tid_plan_s": 1.8,
+        "tid_ror_s": 7.73,
+        "voxel_m": 0.012
+      },
+      "plan": {
+        "antal_facit": 6,
+        "hittade": 6,
+        "extra": 2,
+        "rader": [
+          {
+            "facit": "golv",
+            "hittad": true,
+            "avstand_mm": 0.0,
+            "vinkel_deg": 0.0
+          },
+          {
+            "facit": "tak",
+            "hittad": true,
+            "avstand_mm": 0.0,
+            "vinkel_deg": 0.0
+          },
+          {
+            "facit": "vägg y=0",
+            "hittad": true,
+            "avstand_mm": 0.0,
+            "vinkel_deg": 0.0
+          },
+          {
+            "facit": "vägg y=4",
+            "hittad": true,
+            "avstand_mm": 0.0,
+            "vinkel_deg": 0.0
+          },
+          {
+            "facit": "vägg x=0",
+            "hittad": true,
+            "avstand_mm": 0.0,
+            "vinkel_deg": 0.0
+          },
+          {
+            "facit": "vägg x=6",
+            "hittad": true,
+            "avstand_mm": 0.0,
+            "vinkel_deg": 0.0
+          }
+        ]
+      },
+      "ror": {
+        "antal_facit": 9,
+        "hittade": 7,
+        "extra": 0,
+        "dn_ratt": 7,
+        "max_abs_radiefel_mm": 2.75,
+        "medel_abs_radiefel_mm": 0.45,
+        "max_axelfel_mm": 4.0,
+        "rader": [
+          {
+            "facit": "P1",
+            "dn_facit": "DN100",
+            "hittad": true,
+            "dn_hittad": "DN100",
+            "dn_ratt": true,
+            "radiefel_mm": 0.15,
+            "axelfel_mm": 0.2,
+            "langd_facit_m": 5.2,
+            "langdfel_m": -0.002,
+            "tackning_langd": 1.0,
+            "synlig_omkrets_deg": 200.0
+          },
+          {
+            "facit": "P2",
+            "dn_facit": "DN50",
+            "hittad": true,
+            "dn_hittad": "DN50",
+            "dn_ratt": true,
+            "radiefel_mm": 2.75,
+            "axelfel_mm": 4.0,
+            "langd_facit_m": 5.2,
+            "langdfel_m": -0.011,
+            "tackning_langd": 0.998,
+            "synlig_omkrets_deg": 200.0
+          },
+          {
+            "facit": "P3",
+            "dn_facit": "DN25",
+            "hittad": false
+          },
+          {
+            "facit": "P4",
+            "dn_facit": "DN150",
+            "hittad": true,
+            "dn_hittad": "DN150",
+            "dn_ratt": true,
+            "radiefel_mm": -0.05,
+            "axelfel_mm": 0.0,
+            "langd_facit_m": 2.8,
+            "langdfel_m": -0.004,
+            "tackning_langd": 0.999,
+            "synlig_omkrets_deg": 220.0
+          },
+          {
+            "facit": "P5",
+            "dn_facit": "DN80",
+            "hittad": true,
+            "dn_hittad": "DN80",
+            "dn_ratt": true,
+            "radiefel_mm": -0.05,
+            "axelfel_mm": 0.1,
+            "langd_facit_m": 2.05,
+            "langdfel_m": 0.002,
+            "tackning_langd": 1.0,
+            "synlig_omkrets_deg": 290.0
+          },
+          {
+            "facit": "P6",
+            "dn_facit": "DN80",
+            "hittad": true,
+            "dn_hittad": "DN80",
+            "dn_ratt": true,
+            "radiefel_mm": 0.05,
+            "axelfel_mm": 0.1,
+            "langd_facit_m": 1.85,
+            "langdfel_m": -0.004,
+            "tackning_langd": 0.998,
+            "synlig_omkrets_deg": 280.0
+          },
+          {
+            "facit": "P7",
+            "dn_facit": "DN32",
+            "hittad": false
+          },
+          {
+            "facit": "P8a",
+            "dn_facit": "DN65",
+            "hittad": true,
+            "dn_hittad": "DN65",
+            "dn_ratt": true,
+            "radiefel_mm": -0.05,
+            "axelfel_mm": 0.8,
+            "langd_facit_m": 2.2,
+            "langdfel_m": 0.0,
+            "tackning_langd": 1.0,
+            "synlig_omkrets_deg": 280.0
+          },
+          {
+            "facit": "P8b",
+            "dn_facit": "DN65",
+            "hittad": true,
+            "dn_hittad": "DN65",
+            "dn_ratt": true,
+            "radiefel_mm": -0.05,
+            "axelfel_mm": 0.9,
+            "langd_facit_m": 2.5,
+            "langdfel_m": 0.001,
+            "tackning_langd": 0.999,
+            "synlig_omkrets_deg": 290.0
+          }
+        ]
+      },
+      "kopplingar": {
+        "antal_facit": 1,
+        "hittade": 1,
+        "kandidater_totalt": 1,
+        "rader": [
+          {
+            "facit": "P5-P6",
+            "typ": "böj",
+            "hittad": true
+          }
+        ]
+      },
+      "kontroll": {
+        "plan_andel_hittade": 1.0,
+        "ror_andel_hittade": 0.7777777777777778,
+        "max_abs_radiefel_mm": 2.75,
+        "max_axelfel_mm": 4.0,
+        "dn_andel_ratt": 1.0
+      },
+      "godkand": {
+        "plan_andel_hittade": true,
+        "ror_andel_hittade": false,
+        "max_abs_radiefel_mm": true,
+        "max_axelfel_mm": true,
+        "dn_andel_ratt": true
+      }
+    }
+  ],
+  "alla_krav_uppfyllda": false
+}
